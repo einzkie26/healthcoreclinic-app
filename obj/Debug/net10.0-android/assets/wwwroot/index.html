@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>healthcoreclinic-app-demo</title>
+    <base href="/" />
+    <link rel="stylesheet" href="app.css?v=8" />
+    <link rel="stylesheet" href="healthcoreclinic-app-demo.styles.css" />
+    <link rel="icon" href="data:,">
+</head>
+
+<body>
+
+    <div class="status-bar-safe-area"></div>
+
+    <div id="app">Loading...</div>
+
+    <div id="blazor-error-ui" data-nosnippet>
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss"><span class="ui-icon ui-icon-close" aria-hidden="true"></span></span>
+    </div>
+
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+
+        window.toggleTheme = function () {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+    </script>
+    <script>
+        (function () {
+            const pageSize = 10;
+            const filterHeaders = ['status', 'role', 'category', 'plan', 'doctor', 'gender', 'type'];
+
+            function getCellText(row, index) {
+                const cell = row.cells[index];
+                return cell ? cell.textContent.trim() : '';
+            }
+
+            function findFilterColumn(table) {
+                const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim().toLowerCase());
+                const index = headers.findIndex(header => filterHeaders.some(filter => header.includes(filter)));
+                return index >= 0 ? index : Math.min(headers.length - 1, 0);
+            }
+
+            function hasFullNativeControls(table) {
+                const host = table.parentElement;
+                const container = table.closest('.patients-grid, .archive-container, .patients-container, .users-container, .card') || host;
+                return Boolean(container && container.querySelector('.pagination, .table-enhancer-pagination'));
+            }
+
+            function enhanceTable(table) {
+                if (table.dataset.enhanced === 'true' || table.previousElementSibling?.classList.contains('table-enhancer') || hasFullNativeControls(table)) {
+                    return;
+                }
+
+                const tbody = table.tBodies[0];
+                if (!tbody) {
+                    return;
+                }
+
+                const rows = Array.from(tbody.rows);
+                if (rows.length === 0) {
+                    return;
+                }
+
+                table.dataset.enhanced = 'true';
+
+                const container = document.createElement('div');
+                container.className = 'table-enhancer';
+
+                const tools = document.createElement('div');
+                tools.className = 'table-enhancer-tools';
+                tools.innerHTML = `
+                    <div class="table-enhancer-search">
+                        <span class="ui-icon ui-icon-search" aria-hidden="true"></span>
+                        <input class="table-enhancer-input" type="search" placeholder="Search table..." aria-label="Search table" />
+                    </div>
+                    <select class="table-enhancer-select" aria-label="Filter table"></select>
+                    <span class="table-enhancer-count"></span>
+                `;
+                table.parentNode.insertBefore(container, table);
+                container.appendChild(tools);
+
+                const pagination = document.createElement('div');
+                pagination.className = 'table-enhancer-pagination';
+                table.parentNode.insertBefore(pagination, table.nextSibling);
+
+                const searchInput = tools.querySelector('.table-enhancer-input');
+                const filterSelect = tools.querySelector('.table-enhancer-select');
+                const count = tools.querySelector('.table-enhancer-count');
+                const filterColumn = findFilterColumn(table);
+                const headerText = table.querySelectorAll('thead th')[filterColumn]?.textContent.trim() || 'Filter';
+
+                const filterValues = Array.from(new Set(rows.map(row => getCellText(row, filterColumn)).filter(Boolean))).sort();
+                filterSelect.innerHTML = `<option value="">All ${headerText}</option>` + filterValues.map(value => `<option value="${value}">${value}</option>`).join('');
+
+                let currentPage = 1;
+
+                function getFilteredRows() {
+                    const query = searchInput.value.trim().toLowerCase();
+                    const filter = filterSelect.value;
+                    return rows.filter(row => {
+                        const matchesSearch = !query || row.textContent.toLowerCase().includes(query);
+                        const matchesFilter = !filter || getCellText(row, filterColumn) === filter;
+                        return matchesSearch && matchesFilter;
+                    });
+                }
+
+                function renderPagination(totalPages) {
+                    pagination.innerHTML = '';
+                    if (totalPages <= 1) {
+                        return;
+                    }
+
+                    const makeButton = (label, page, disabled, active) => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = `table-enhancer-page${active ? ' active' : ''}`;
+                        button.textContent = label;
+                        button.disabled = disabled;
+                        button.addEventListener('click', () => {
+                            currentPage = page;
+                            render();
+                        });
+                        return button;
+                    };
+
+                    pagination.appendChild(makeButton('Prev', Math.max(1, currentPage - 1), currentPage === 1, false));
+                    for (let page = 1; page <= totalPages; page += 1) {
+                        pagination.appendChild(makeButton(String(page), page, false, page === currentPage));
+                    }
+                    pagination.appendChild(makeButton('Next', Math.min(totalPages, currentPage + 1), currentPage === totalPages, false));
+                }
+
+                function render() {
+                    const filteredRows = getFilteredRows();
+                    const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
+                    currentPage = Math.min(currentPage, totalPages);
+                    const start = (currentPage - 1) * pageSize;
+                    const visibleRows = new Set(filteredRows.slice(start, start + pageSize));
+
+                    rows.forEach(row => {
+                        row.style.display = visibleRows.has(row) ? '' : 'none';
+                    });
+
+                    count.textContent = `${filteredRows.length} result${filteredRows.length === 1 ? '' : 's'}`;
+                    renderPagination(totalPages);
+                }
+
+                searchInput.addEventListener('input', () => {
+                    currentPage = 1;
+                    render();
+                });
+                filterSelect.addEventListener('change', () => {
+                    currentPage = 1;
+                    render();
+                });
+                render();
+            }
+
+            function enhanceTables() {
+                document.querySelectorAll('table').forEach(enhanceTable);
+            }
+
+            const observer = new MutationObserver(() => enhanceTables());
+            document.addEventListener('DOMContentLoaded', enhanceTables);
+            observer.observe(document.body, { childList: true, subtree: true });
+            window.healthcoreEnhanceTables = enhanceTables;
+        })();
+    </script>
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+
+</body>
+
+</html>

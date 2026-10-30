@@ -407,6 +407,9 @@ namespace healthcoreclinic_app_demo.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("CreatedByAdminID")
+                        .HasColumnType("int");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -426,6 +429,8 @@ namespace healthcoreclinic_app_demo.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("UserID");
+
+                    b.HasIndex("CreatedByAdminID");
 
                     b.HasIndex("Email")
                         .IsUnique();
@@ -571,11 +576,18 @@ namespace healthcoreclinic_app_demo.Migrations
 
             modelBuilder.Entity("healthcoreclinic_app_demo.Models.User", b =>
                 {
+                    b.HasOne("healthcoreclinic_app_demo.Models.User", "CreatedByAdmin")
+                        .WithMany("CreatedStaff")
+                        .HasForeignKey("CreatedByAdminID")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("healthcoreclinic_app_demo.Models.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CreatedByAdmin");
 
                     b.Navigation("Role");
                 });
@@ -618,6 +630,8 @@ namespace healthcoreclinic_app_demo.Migrations
 
             modelBuilder.Entity("healthcoreclinic_app_demo.Models.User", b =>
                 {
+                    b.Navigation("CreatedStaff");
+
                     b.Navigation("Subscriptions");
                 });
 #pragma warning restore 612, 618

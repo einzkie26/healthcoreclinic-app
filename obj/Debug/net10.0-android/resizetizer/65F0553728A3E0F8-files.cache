@@ -1,8 +1,13 @@
 ﻿obj\Debug\net10.0-android\resizetizer\r\drawable-hdpi\dotnet_bot.png
+obj\Debug\net10.0-android\resizetizer\r\drawable-hdpi\hc_logo_transparent.png
 obj\Debug\net10.0-android\resizetizer\r\drawable-mdpi\dotnet_bot.png
+obj\Debug\net10.0-android\resizetizer\r\drawable-mdpi\hc_logo_transparent.png
 obj\Debug\net10.0-android\resizetizer\r\drawable-xhdpi\dotnet_bot.png
+obj\Debug\net10.0-android\resizetizer\r\drawable-xhdpi\hc_logo_transparent.png
 obj\Debug\net10.0-android\resizetizer\r\drawable-xxhdpi\dotnet_bot.png
+obj\Debug\net10.0-android\resizetizer\r\drawable-xxhdpi\hc_logo_transparent.png
 obj\Debug\net10.0-android\resizetizer\r\drawable-xxxhdpi\dotnet_bot.png
+obj\Debug\net10.0-android\resizetizer\r\drawable-xxxhdpi\hc_logo_transparent.png
 obj\Debug\net10.0-android\resizetizer\r\mipmap-anydpi-v26\appicon.xml
 obj\Debug\net10.0-android\resizetizer\r\mipmap-anydpi-v26\appicon_round.xml
 obj\Debug\net10.0-android\resizetizer\r\mipmap-hdpi\appicon.png

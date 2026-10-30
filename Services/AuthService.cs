@@ -3,6 +3,7 @@ using healthcoreclinic_app_demo.Models;
 using healthcoreclinic_app_demo.Utilities;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using ClinicResource = healthcoreclinic_app_demo.Models.Resource;
 
 namespace healthcoreclinic_app_demo.Services
 {
@@ -1101,7 +1102,7 @@ namespace healthcoreclinic_app_demo.Services
             }
         }
 
-        public async Task<List<Resource>> GetResourcesAsync()
+        public async Task<List<ClinicResource>> GetResourcesAsync()
         {
             try
             {
@@ -1111,7 +1112,7 @@ namespace healthcoreclinic_app_demo.Services
             }
             catch
             {
-                return new List<Resource>();
+                return new List<ClinicResource>();
             }
         }
 

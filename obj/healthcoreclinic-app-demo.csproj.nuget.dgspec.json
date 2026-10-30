@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj": {}
+    "D:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj": {}
   },
   "projects": {
-    "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj": {
+    "D:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj",
+        "projectUniqueName": "D:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj",
         "projectName": "healthcoreclinic-app-demo",
-        "projectPath": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj",
+        "projectPath": "D:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj",
         "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\obj\\",
+        "outputPath": "D:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\obj\\",
         "projectStyle": "PackageReference",
         "crossTargeting": true,
         "fallbackFolders": [
@@ -40,12 +40,12 @@
             "projectReferences": {}
           },
           "net10.0-ios": {
-            "framework": "net10.0-ios26.2",
+            "framework": "net10.0-ios26.5",
             "targetAlias": "net10.0-ios",
             "projectReferences": {}
           },
           "net10.0-maccatalyst": {
-            "framework": "net10.0-maccatalyst26.2",
+            "framework": "net10.0-maccatalyst26.5",
             "targetAlias": "net10.0-maccatalyst",
             "projectReferences": {}
           },
@@ -65,7 +65,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.300"
+        "SdkAnalysisLevel": "10.0.400"
       },
       "frameworks": {
         "net10.0-android": {
@@ -78,7 +78,7 @@
             },
             "Microsoft.AspNetCore.Components.WebView.Maui": {
               "target": "Package",
-              "version": "[10.0.20, )"
+              "version": "[10.0.110, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -96,12 +96,12 @@
             },
             "Microsoft.Maui.Controls": {
               "target": "Package",
-              "version": "[10.0.20, )"
+              "version": "[10.0.110, )"
             },
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.8, )",
+              "version": "[10.0.14, )",
               "autoReferenced": true
             }
           },
@@ -127,7 +127,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.403/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -404,7 +404,7 @@
           }
         },
         "net10.0-ios": {
-          "framework": "net10.0-ios26.2",
+          "framework": "net10.0-ios26.5",
           "targetAlias": "net10.0-ios",
           "dependencies": {
             "BCrypt.Net-Next": {
@@ -413,7 +413,7 @@
             },
             "Microsoft.AspNetCore.Components.WebView.Maui": {
               "target": "Package",
-              "version": "[10.0.20, )"
+              "version": "[10.0.110, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -431,12 +431,12 @@
             },
             "Microsoft.Maui.Controls": {
               "target": "Package",
-              "version": "[10.0.20, )"
+              "version": "[10.0.110, )"
             },
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.8, )",
+              "version": "[10.0.14, )",
               "autoReferenced": true
             }
           },
@@ -462,7 +462,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.403/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -739,7 +739,7 @@
           }
         },
         "net10.0-maccatalyst": {
-          "framework": "net10.0-maccatalyst26.2",
+          "framework": "net10.0-maccatalyst26.5",
           "targetAlias": "net10.0-maccatalyst",
           "dependencies": {
             "BCrypt.Net-Next": {
@@ -748,7 +748,7 @@
             },
             "Microsoft.AspNetCore.Components.WebView.Maui": {
               "target": "Package",
-              "version": "[10.0.20, )"
+              "version": "[10.0.110, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -766,12 +766,12 @@
             },
             "Microsoft.Maui.Controls": {
               "target": "Package",
-              "version": "[10.0.20, )"
+              "version": "[10.0.110, )"
             },
             "Microsoft.NET.ILLink.Tasks": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.8, )",
+              "version": "[10.0.14, )",
               "autoReferenced": true
             }
           },
@@ -798,7 +798,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.403/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",
@@ -1084,7 +1084,7 @@
             },
             "Microsoft.AspNetCore.Components.WebView.Maui": {
               "target": "Package",
-              "version": "[10.0.20, )"
+              "version": "[10.0.110, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -1102,7 +1102,7 @@
             },
             "Microsoft.Maui.Controls": {
               "target": "Package",
-              "version": "[10.0.20, )"
+              "version": "[10.0.110, )"
             }
           },
           "imports": [
@@ -1130,7 +1130,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.300/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.403/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.CSharp": "(,4.7.32767]",
             "Microsoft.VisualBasic": "(,10.4.32767]",

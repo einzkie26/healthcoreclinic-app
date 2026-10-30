@@ -8,7 +8,7 @@
 @inject ClinicDbContext Db
 
 @code {
-    private List<Resource> ResourceItems = new();
+    private List<ClinicResource> ResourceItems = new();
     private ResourceFormModel NewResource = new();
     private ResourceFormModel EditResource = new();
     private bool ShowAddResourceModal;
@@ -48,7 +48,7 @@
 
     private void CloseAddResourceModal() => ShowAddResourceModal = false;
 
-    private void OpenEditResourceModal(Resource resource)
+    private void OpenEditResourceModal(ClinicResource resource)
     {
         FormError = null;
         EditResource = new ResourceFormModel
@@ -83,7 +83,7 @@
             return;
         }
 
-        var resource = new Resource
+        var resource = new ClinicResource
         {
             ResourceName = NewResource.ResourceName.Trim(),
             ResourceType = NewResource.ResourceType,

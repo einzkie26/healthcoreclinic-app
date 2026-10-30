@@ -3,6 +3,8 @@ build_property.MauiXamlNoWarn =
 build_property.EnableMauiXamlDiagnostics = true
 build_property.MauiXamlLineInfo = 
 build_property.Configuration = Debug
+build_property.MauiXamlHotReload = 
+build_property.EnablePreviewFeatures = 
 build_property.TargetFramework = net10.0-windows10.0.19041.0
 build_property.TargetFramework = net10.0-windows10.0.19041.0
 build_property.TargetPlatformMinVersion = 10.0.17763.0
@@ -24,7 +26,7 @@ build_property.TargetFrameworkVersion = v10.0
 build_property.EntryPointFilePath = 
 build_property.RootNamespace = healthcoreclinic_app_demo
 build_property.RootNamespace = healthcoreclinic_app_demo
-build_property.ProjectDir = E:\projects\sharp_MAUI_HEALTHCARE\healthcoreclinic-app-demo\
+build_property.ProjectDir = D:\projects\sharp_MAUI_HEALTHCARE\healthcoreclinic-app-demo\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTAotOptimizerEnabled = true
@@ -38,12 +40,12 @@ build_property.CsWinRTUseWindowsUIXamlProjections = false
 build_property.RazorLangVersion = 10.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = E:\projects\sharp_MAUI_HEALTHCARE\healthcoreclinic-app-demo
+build_property.MSBuildProjectDirectory = D:\projects\sharp_MAUI_HEALTHCARE\healthcoreclinic-app-demo
 build_property._RazorSourceGeneratorDebug = 
 build_property.EffectiveAnalysisLevelStyle = 10.0
 build_property.EnableCodeStyleSeverity = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/App.xaml]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/App.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = healthcoreclinic_app_demo.App.xaml
 build_metadata.AdditionalFiles.TargetPath = App.xaml
@@ -54,7 +56,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/MainPage.xaml]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/MainPage.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = healthcoreclinic_app_demo.MainPage.xaml
 build_metadata.AdditionalFiles.TargetPath = MainPage.xaml
@@ -65,7 +67,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/AdminLayout.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/AdminLayout.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcQWRtaW5MYXlvdXQucmF6b3I=
@@ -76,7 +78,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/DoctorLayout.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/DoctorLayout.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcRG9jdG9yTGF5b3V0LnJhem9y
@@ -87,7 +89,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/ReceptionistLayout.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/ReceptionistLayout.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcUmVjZXB0aW9uaXN0TGF5b3V0LnJhem9y
@@ -98,7 +100,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/SuperAdminLayout.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/SuperAdminLayout.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcU3VwZXJBZG1pbkxheW91dC5yYXpvcg==
@@ -109,7 +111,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Archive.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Archive.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxBcmNoaXZlLnJhem9y
@@ -120,7 +122,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Dashboard.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Dashboard.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxEYXNoYm9hcmQucmF6b3I=
@@ -131,7 +133,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Invoices.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Invoices.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxJbnZvaWNlcy5yYXpvcg==
@@ -142,7 +144,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Patients.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Patients.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxQYXRpZW50cy5yYXpvcg==
@@ -153,7 +155,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/ReportsAnalytics.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/ReportsAnalytics.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxSZXBvcnRzQW5hbHl0aWNzLnJhem9y
@@ -164,7 +166,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Resources.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Resources.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxSZXNvdXJjZXMucmF6b3I=
@@ -175,7 +177,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Subscription.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/Subscription.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxTdWJzY3JpcHRpb24ucmF6b3I=
@@ -186,7 +188,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/UserManagement.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Admin/UserManagement.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblxVc2VyTWFuYWdlbWVudC5yYXpvcg==
@@ -197,7 +199,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Dashboard.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Dashboard.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEYXNoYm9hcmQucmF6b3I=
@@ -208,7 +210,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Appointments.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Appointments.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcQXBwb2ludG1lbnRzLnJhem9y
@@ -219,7 +221,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Dashboard.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Dashboard.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcRGFzaGJvYXJkLnJhem9y
@@ -230,7 +232,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/MedicalRecords.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/MedicalRecords.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcTWVkaWNhbFJlY29yZHMucmF6b3I=
@@ -241,7 +243,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Patients.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Patients.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcUGF0aWVudHMucmF6b3I=
@@ -252,7 +254,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Prescriptions.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Prescriptions.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcUHJlc2NyaXB0aW9ucy5yYXpvcg==
@@ -263,7 +265,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Schedule.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Doctor/Schedule.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEb2N0b3JcU2NoZWR1bGUucmF6b3I=
@@ -274,7 +276,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/NotFound.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOb3RGb3VuZC5yYXpvcg==
@@ -285,7 +287,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Appointments.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Appointments.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcQXBwb2ludG1lbnRzLnJhem9y
@@ -296,7 +298,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Billing.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Billing.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcQmlsbGluZy5yYXpvcg==
@@ -307,7 +309,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Dashboard.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Dashboard.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcRGFzaGJvYXJkLnJhem9y
@@ -318,7 +320,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Invoices.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Invoices.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcSW52b2ljZXMucmF6b3I=
@@ -329,7 +331,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Patients.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Patients.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcUGF0aWVudHMucmF6b3I=
@@ -340,7 +342,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Schedule.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Receptionist/Schedule.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWNlcHRpb25pc3RcU2NoZWR1bGUucmF6b3I=
@@ -351,7 +353,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/AccessControl.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/AccessControl.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdXBlckFkbWluXEFjY2Vzc0NvbnRyb2wucmF6b3I=
@@ -362,7 +364,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Dashboard.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Dashboard.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdXBlckFkbWluXERhc2hib2FyZC5yYXpvcg==
@@ -373,7 +375,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Plans.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Plans.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdXBlckFkbWluXFBsYW5zLnJhem9y
@@ -384,7 +386,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Reports.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Reports.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdXBlckFkbWluXFJlcG9ydHMucmF6b3I=
@@ -395,7 +397,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Resources.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Resources.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdXBlckFkbWluXFJlc291cmNlcy5yYXpvcg==
@@ -406,7 +408,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Subscriptions.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/Subscriptions.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdXBlckFkbWluXFN1YnNjcmlwdGlvbnMucmF6b3I=
@@ -417,7 +419,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/UserManagement.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/SuperAdmin/UserManagement.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdXBlckFkbWluXFVzZXJNYW5hZ2VtZW50LnJhem9y
@@ -428,7 +430,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Routes.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Routes.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
@@ -439,7 +441,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Shared/AppointmentWorkspace.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Shared/AppointmentWorkspace.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcQXBwb2ludG1lbnRXb3Jrc3BhY2UucmF6b3I=
@@ -450,7 +452,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/_Imports.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/_Imports.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
@@ -461,7 +463,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = 
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/MainLayout.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
@@ -472,7 +474,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = b-64h9anpw40
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Login.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Login.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbi5yYXpvcg==
@@ -483,7 +485,7 @@ build_metadata.AdditionalFiles.EnableDiagnostics =
 build_metadata.AdditionalFiles.LineInfo = 
 build_metadata.AdditionalFiles.CssScope = b-lykbwtnxgi
 
-[E:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Register.razor]
+[D:/projects/sharp_MAUI_HEALTHCARE/healthcoreclinic-app-demo/Components/Pages/Register.razor]
 build_metadata.AdditionalFiles.GenKind = 
 build_metadata.AdditionalFiles.ManifestResourceName = 
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWdpc3Rlci5yYXpvcg==

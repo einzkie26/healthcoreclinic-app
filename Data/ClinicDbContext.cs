@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using healthcoreclinic_app_demo.Models;
+using ClinicResource = healthcoreclinic_app_demo.Models.Resource;
 
 namespace healthcoreclinic_app_demo.Data
 {
@@ -12,7 +13,7 @@ namespace healthcoreclinic_app_demo.Data
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<Patient> Patients { get; set; }
         public DbSet<DoctorSchedule> DoctorSchedules { get; set; }
-        public DbSet<Resource> Resources { get; set; }
+        public DbSet<ClinicResource> Resources { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<MedicalRecord> MedicalRecords { get; set; }
         public DbSet<Prescription> Prescriptions { get; set; }
@@ -35,7 +36,7 @@ namespace healthcoreclinic_app_demo.Data
             modelBuilder.Entity<Subscription>().HasKey(s => s.SubscriptionID);
             modelBuilder.Entity<Patient>().HasKey(p => p.PatientID);
             modelBuilder.Entity<DoctorSchedule>().HasKey(ds => ds.ScheduleID);
-            modelBuilder.Entity<Resource>().HasKey(r => r.ResourceID);
+            modelBuilder.Entity<ClinicResource>().HasKey(r => r.ResourceID);
             modelBuilder.Entity<Appointment>().HasKey(a => a.AppointmentID);
             modelBuilder.Entity<MedicalRecord>().HasKey(m => m.RecordID);
             modelBuilder.Entity<Prescription>().HasKey(p => p.PrescriptionID);
@@ -50,7 +51,7 @@ namespace healthcoreclinic_app_demo.Data
             modelBuilder.Entity<Subscription>().ToTable("Subscriptions");
             modelBuilder.Entity<Patient>().ToTable("Patients");
             modelBuilder.Entity<DoctorSchedule>().ToTable("DoctorSchedules");
-            modelBuilder.Entity<Resource>().ToTable("Resources");
+            modelBuilder.Entity<ClinicResource>().ToTable("Resources");
             modelBuilder.Entity<Appointment>().ToTable("Appointments");
             modelBuilder.Entity<MedicalRecord>().ToTable("MedicalRecords");
             modelBuilder.Entity<Prescription>().ToTable("Prescriptions");

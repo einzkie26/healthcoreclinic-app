@@ -8,7 +8,7 @@
 @inject ClinicDbContext Db
 
 @code {
-    private List<Resource> ResourceItems = new();
+    private List<ClinicResource> ResourceItems = new();
     private string StatusFilter = "All";
     private string TypeFilter = "All";
 
@@ -25,7 +25,7 @@
             .ToListAsync();
     }
 
-    private IEnumerable<Resource> FilteredResources => ResourceItems
+    private IEnumerable<ClinicResource> FilteredResources => ResourceItems
         .Where(r => StatusFilter == "All" || r.Status == StatusFilter)
         .Where(r => TypeFilter == "All" || r.ResourceType == TypeFilter);
 

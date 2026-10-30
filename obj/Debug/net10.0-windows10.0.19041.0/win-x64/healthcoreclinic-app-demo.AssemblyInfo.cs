@@ -17,7 +17,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("healthcoreclinic-app-demo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+9af6b5cab3ae5d59153d751e4d2aaab57a0115d2")]
 [assembly: System.Reflection.AssemblyProductAttribute("healthcoreclinic-app-demo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("healthcoreclinic-app-demo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

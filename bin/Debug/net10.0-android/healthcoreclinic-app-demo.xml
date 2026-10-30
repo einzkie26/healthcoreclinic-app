@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>healthcoreclinic-app-demo</name>
+    </assembly>
+    <members>
+        <member name="T:healthcoreclinic_app_demo.Migrations.InitialCreate">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.InitialCreate.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.InitialCreate.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:healthcoreclinic_app_demo.Migrations.AddResourceInvoicePaymentFields">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddResourceInvoicePaymentFields.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddResourceInvoicePaymentFields.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddResourceInvoicePaymentFields.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:healthcoreclinic_app_demo.Migrations.AddRolePermissions">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddRolePermissions.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddRolePermissions.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddRolePermissions.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:healthcoreclinic_app_demo.Migrations.AddUserCreatedByAdmin">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddUserCreatedByAdmin.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddUserCreatedByAdmin.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Migrations.AddUserCreatedByAdmin.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Utilities.PasswordHasher.HashPassword(System.String)">
+            <summary>
+            Hashes a password securely using BCrypt
+            </summary>
+        </member>
+        <member name="M:healthcoreclinic_app_demo.Utilities.PasswordHasher.VerifyPassword(System.String,System.String)">
+            <summary>
+            Verifies a plain-text password against a BCrypt hash
+            </summary>
+        </member>
+        <member name="T:healthcoreclinic_app_demo.Resource">
+            <summary>
+            Android Resource Designer class.
+            Exposes the Android Resource designer assembly into the project Namespace.
+            </summary>
+        </member>
+    </members>
+</doc>
