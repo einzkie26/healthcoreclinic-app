@@ -1,0 +1,456 @@
+﻿@page "/superadmin/users"
+@layout SuperAdminLayout
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+
+<div class="page-header">
+    <h1>User Management</h1>
+    <div class="header-buttons">
+        <button class="btn btn-primary">+ Add New User</button>
+        <button class="btn btn-override" @onclick="ShowAdminOverrides">Override Admin Actions</button>
+    </div>
+</div>
+
+@if (ShowOverridesModal)
+{
+    <div class="modal-overlay" @onclick="CloseAdminOverrides">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Admin Action Overrides</h2>
+                <button class="modal-close" @onclick="CloseAdminOverrides">✕</button>
+            </div>
+            <div class="modal-body">
+                @if (AdminActions.Count > 0)
+                {
+                    <div class="overrides-list">
+                        @foreach (var action in AdminActions)
+                        {
+                            <div class="override-item">
+                                <div class="override-info">
+                                    <h4>@action.ActionType</h4>
+                                    <p class="override-user">By: <strong>@action.AdminName</strong></p>
+                                    <p class="override-details">@action.Details</p>
+                                    <p class="override-time">@action.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</p>
+                                </div>
+                                <div class="override-actions">
+                                    <button class="btn-small btn-approve" @onclick="() => ApproveOverride(action.Id)">Approve</button>
+                                    <button class="btn-small btn-reject" @onclick="() => RejectOverride(action.Id)">Reject</button>
+                                    <button class="btn-small btn-revert" @onclick="() => RevertAction(action.Id)">Revert</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="no-actions">No pending admin actions to override.</p>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <table class="users-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td>John Admin</td>
+                <td>john@clinic.com</td>
+                <td><span class="badge badge-info">Admin</span></td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                    <button class="btn-small btn-edit">Edit</button>
+                    <button class="btn-small btn-delete">Delete</button>
+                </td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Dr. Sarah</td>
+                <td>sarah@clinic.com</td>
+                <td><span class="badge badge-warning">Doctor</span></td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                    <button class="btn-small btn-edit">Edit</button>
+                    <button class="btn-small btn-delete">Delete</button>
+                </td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>Mary Reception</td>
+                <td>mary@clinic.com</td>
+                <td><span class="badge badge-secondary">Reception</span></td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>
+                    <button class="btn-small btn-edit">Edit</button>
+                    <button class="btn-small btn-delete">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1e3c72;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #2a5298;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1e3c72;
+}
+
+.btn-override {
+    background-color: #ff9800;
+    color: white;
+}
+
+.btn-override:hover {
+    background-color: #e68900;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #1e3c72;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.overrides-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.override-item {
+    background-color: #f9f9f9;
+    border-left: 4px solid #ff9800;
+    padding: 15px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+.override-info {
+    flex: 1;
+}
+
+.override-item h4 {
+    margin: 0 0 8px 0;
+    color: #1e3c72;
+}
+
+.override-user {
+    margin: 0 0 5px 0;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.override-details {
+    margin: 0 0 5px 0;
+    font-size: 0.9em;
+    color: #777;
+}
+
+.override-time {
+    margin: 0;
+    font-size: 0.85em;
+    color: #999;
+}
+
+.override-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 15px;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+.btn-approve {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn-approve:hover {
+    background-color: #45a049;
+}
+
+.btn-reject {
+    background-color: #f44336;
+    color: white;
+}
+
+.btn-reject:hover {
+    background-color: #da190b;
+}
+
+.btn-revert {
+    background-color: #2196f3;
+    color: white;
+}
+
+.btn-revert:hover {
+    background-color: #0b7dda;
+}
+
+.btn-edit {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #45a049;
+}
+
+.btn-delete {
+    background-color: #f44336;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #da190b;
+}
+
+.no-actions {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    font-size: 1.05em;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table thead {
+    background-color: #f5f5f5;
+}
+
+.users-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.users-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.users-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge-info {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.badge-warning {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.badge-secondary {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.badge-success {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+</style>
+
+@code {
+    private bool ShowOverridesModal = false;
+    private List<AdminAction> AdminActions = new();
+
+    protected override void OnInitialized()
+    {
+        // Load sample admin actions for demonstration
+        AdminActions = new List<AdminAction>
+        {
+            new AdminAction
+            {
+                Id = 1,
+                ActionType = "User Suspension",
+                AdminName = "John Admin",
+                Details = "Suspended user account: dr.mike@clinic.com (Dr. Michael)",
+                Timestamp = DateTime.Now.AddHours(-2)
+            },
+            new AdminAction
+            {
+                Id = 2,
+                ActionType = "Role Change",
+                AdminName = "John Admin",
+                Details = "Changed role from Doctor to Admin for: sarah.doe@clinic.com",
+                Timestamp = DateTime.Now.AddHours(-5)
+            },
+            new AdminAction
+            {
+                Id = 3,
+                ActionType = "Permission Revocation",
+                AdminName = "John Admin",
+                Details = "Revoked prescription access for user: nurse.jane@clinic.com",
+                Timestamp = DateTime.Now.AddDays(-1)
+            }
+        };
+    }
+
+    private void ShowAdminOverrides()
+    {
+        ShowOverridesModal = true;
+    }
+
+    private void CloseAdminOverrides()
+    {
+        ShowOverridesModal = false;
+    }
+
+    private void ApproveOverride(int actionId)
+    {
+        var action = AdminActions.FirstOrDefault(a => a.Id == actionId);
+        if (action != null)
+        {
+            AdminActions.Remove(action);
+            StateHasChanged();
+        }
+    }
+
+    private void RejectOverride(int actionId)
+    {
+        var action = AdminActions.FirstOrDefault(a => a.Id == actionId);
+        if (action != null)
+        {
+            AdminActions.Remove(action);
+            StateHasChanged();
+        }
+    }
+
+    private void RevertAction(int actionId)
+    {
+        var action = AdminActions.FirstOrDefault(a => a.Id == actionId);
+        if (action != null)
+        {
+            AdminActions.Remove(action);
+            StateHasChanged();
+        }
+    }
+
+    private class AdminAction
+    {
+        public int Id { get; set; }
+        public string ActionType { get; set; }
+        public string AdminName { get; set; }
+        public string Details { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+}

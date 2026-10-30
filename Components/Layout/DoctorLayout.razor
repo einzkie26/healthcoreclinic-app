@@ -1,0 +1,68 @@
+@inherits LayoutComponentBase
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="layout-container role-doctor">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <img src="images/hc_logo_transparent.svg" alt="HealthCore logo" class="sidebar-logo" />
+                <p class="sidebar-title">HealthCore</p>
+            </div>
+            <p class="user-role">Doctor Portal</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="@AppRoutes.Doctor" class="menu-item @IsActive(AppRoutes.Doctor)">
+                Dashboard
+            </a>
+            <a href="@AppRoutes.DoctorAppointments" class="menu-item @IsActive(AppRoutes.DoctorAppointments)">
+                Appointments
+            </a>
+            <a href="@AppRoutes.DoctorPatients" class="menu-item @IsActive(AppRoutes.DoctorPatients)">
+                Patients
+            </a>
+            <a href="@AppRoutes.DoctorMedicalRecords" class="menu-item @IsActive(AppRoutes.DoctorMedicalRecords)">
+                Medical Records
+            </a>
+            <a href="@AppRoutes.DoctorPrescriptions" class="menu-item @IsActive(AppRoutes.DoctorPrescriptions)">
+                Prescriptions
+            </a>
+            <a href="@AppRoutes.DoctorSchedule" class="menu-item @IsActive(AppRoutes.DoctorSchedule)">
+                Schedule
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="theme-toggle-btn" onclick="toggleTheme()">Theme Toggle</button>
+            <button class="logout-btn" @onclick="HandleLogout">Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        @Body
+    </main>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!Auth.IsAuthenticated || Auth.CurrentRole != "Doctor")
+        {
+            Nav.NavigateTo(AppRoutes.Login);
+        }
+    }
+
+    void HandleLogout()
+    {
+        Auth.Logout();
+        Nav.NavigateTo(AppRoutes.Login);
+    }
+
+    string IsActive(string url)
+    {
+        var uri = new Uri(Nav.Uri);
+        return uri.LocalPath == url ? "active" : "";
+    }
+}

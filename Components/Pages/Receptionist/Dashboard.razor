@@ -1,0 +1,496 @@
+@page "/receptionist"
+@layout ReceptionistLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using Microsoft.EntityFrameworkCore
+@inject AuthService Auth
+@inject ClinicDbContext Db
+
+@code {
+    private int CheckinsToday;
+    private int PendingAppointments;
+    private int CallsReceived;
+    private int AvgWaitTimeMinutes;
+    private int CurrentQueue;
+    private int EstimatedWaitMinutes;
+    private int BusyDoctors;
+    private int TotalDoctors;
+    private int FreeRooms;
+    private int TotalRooms;
+    private List<Patient> RecentPatients = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        var today = DateTime.Today;
+        var tomorrow = today.AddDays(1);
+
+        var todayAppointments = await Db.Appointments
+            .AsNoTracking()
+            .Where(a => a.AppointmentDate >= today && a.AppointmentDate < tomorrow)
+            .ToListAsync();
+
+        CheckinsToday = todayAppointments.Count(a => a.Status == "Checked In" || a.Status == "Completed");
+        PendingAppointments = todayAppointments.Count(a => a.Status == "Scheduled" || a.Status == "Pending");
+        CallsReceived = todayAppointments.Count(a => a.CreatedBy == Auth.CurrentUserID);
+
+        CurrentQueue = PendingAppointments;
+        AvgWaitTimeMinutes = PendingAppointments == 0 ? 0 : PendingAppointments * 6;
+        EstimatedWaitMinutes = PendingAppointments == 0 ? 0 : PendingAppointments * 8;
+
+        BusyDoctors = todayAppointments
+            .Where(a => a.DoctorID > 0)
+            .Select(a => a.DoctorID)
+            .Distinct()
+            .Count();
+
+        TotalDoctors = await Db.Users
+            .AsNoTracking()
+            .Include(u => u.Role)
+            .CountAsync(u => u.IsActive && u.Role != null && u.Role.RoleName == "Doctor");
+
+        var roomResources = await Db.Resources
+            .AsNoTracking()
+            .Where(r => r.ResourceType.Contains("Room") || r.ResourceName.Contains("Room") || r.ResourceType == "Facilities")
+            .ToListAsync();
+
+        TotalRooms = roomResources.Count;
+        FreeRooms = roomResources.Count(r => r.Status == "Available");
+
+        RecentPatients = await Db.Patients
+            .AsNoTracking()
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(6)
+            .ToListAsync();
+    }
+}
+
+<div class="page-container">
+    <div class="page-header-modern">
+        <div class="header-content">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Reception desk overview</p>
+        </div>
+        <div class="header-date">Last updated: @DateTime.Now.ToString("MMM dd, yyyy HH:mm")</div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon kpi-checkins">
+                <span class="ui-icon ui-icon-check" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">Check-ins Today</p>
+                <p class="kpi-value">@CheckinsToday</p>
+                <p class="kpi-change neutral">Updated today</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon kpi-pending">
+                <span class="ui-icon ui-icon-alert" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">Pending Appointments</p>
+                <p class="kpi-value">@PendingAppointments</p>
+                <p class="kpi-change neutral">Today</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon kpi-calls">
+                <span class="ui-icon ui-icon-search" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">Calls Received</p>
+                <p class="kpi-value">@CallsReceived</p>
+                <p class="kpi-change neutral">Logged by you</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon kpi-wait">
+                <span class="ui-icon ui-icon-box" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">Avg Wait Time</p>
+                <p class="kpi-value">@AvgWaitTimeMinutes min</p>
+                <p class="kpi-change neutral">Estimated</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="chart-card">
+            <h3>Recent Added Patients</h3>
+            @if (RecentPatients.Count == 0)
+            {
+                <div class="empty-state">
+                    <p>No recent patients found.</p>
+                </div>
+            }
+            else
+            {
+                <div class="recent-patients">
+                    @foreach (var patient in RecentPatients)
+                    {
+                        <div class="recent-patient">
+                            <div>
+                                <p class="patient-name">@patient.FullName</p>
+                                <p class="patient-meta">@(patient.ContactNumber ?? "No contact")</p>
+                            </div>
+                            <span class="patient-date">@patient.CreatedAt.ToString("MMM dd, yyyy")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="stats-card">
+            <h3>Queue Status</h3>
+            <div class="stats-list">
+                <div class="stat-row">
+                    <span class="stat-label">Current Queue</span>
+                    <span class="badge badge-warning">@CurrentQueue patients</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Estimated Wait</span>
+                    <span class="badge badge-info">@EstimatedWaitMinutes minutes</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Busy Doctors</span>
+                    <span class="badge badge-success">@BusyDoctors/@TotalDoctors</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Free Rooms</span>
+                    <span class="badge badge-success">@FreeRooms/@TotalRooms</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.header-content h1 {
+    margin: 0 0 8px 0;
+}
+
+.page-title {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.95em;
+    color: #7f8c8d;
+    margin: 0;
+}
+
+.header-date {
+    font-size: 0.9em;
+    color: #95a5a6;
+    font-weight: 600;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    border-left: 4px solid #f5576c;
+    transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+.kpi-icon {
+    font-size: 2.5em;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.kpi-checkins {
+    background-color: #e8f5e9;
+}
+
+.kpi-pending {
+    background-color: #fff3e0;
+}
+
+.kpi-calls {
+    background-color: #e3f2fd;
+}
+
+.kpi-wait {
+    background-color: #f3e5f5;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-label {
+    font-size: 0.85em;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.kpi-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.kpi-change {
+    font-size: 0.85em;
+    margin: 0;
+}
+
+.kpi-change.positive {
+    color: #27ae60;
+}
+
+.kpi-change.negative {
+    color: #e74c3c;
+}
+
+.kpi-change.neutral {
+    color: #95a5a6;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.chart-card,
+.stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card h3,
+.stats-card h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.1em;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 200px;
+    border-radius: 8px;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-placeholder.pink {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.chart-placeholder svg {
+    width: 90%;
+    height: 90%;
+}
+
+.recent-patients {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.recent-patient {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+}
+
+.patient-name {
+    margin: 0;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.patient-meta {
+    margin: 4px 0 0 0;
+    color: #6b7280;
+    font-size: 0.85em;
+}
+
+.patient-date {
+    font-size: 0.85em;
+    color: #475569;
+    font-weight: 600;
+}
+
+.empty-state {
+    padding: 20px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #6b7280;
+    text-align: center;
+}
+
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-warning {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+[data-theme="dark"] .page-title {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .page-subtitle,
+[data-theme="dark"] .header-date,
+[data-theme="dark"] .kpi-label,
+[data-theme="dark"] .kpi-change,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .patient-meta,
+[data-theme="dark"] .patient-date {
+    color: #cbd5f5;
+}
+
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .chart-card,
+[data-theme="dark"] .stats-card {
+    background: #1f2937;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .kpi-value,
+[data-theme="dark"] .patient-name {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .kpi-icon,
+[data-theme="dark"] .kpi-checkins,
+[data-theme="dark"] .kpi-pending,
+[data-theme="dark"] .kpi-calls,
+[data-theme="dark"] .kpi-wait {
+    background-color: #111827 !important;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .recent-patient,
+[data-theme="dark"] .stat-row,
+[data-theme="dark"] .empty-state {
+    background: #111827;
+    border-color: #1f2937;
+}
+
+@@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.8em;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header-modern {
+        flex-direction: column;
+    }
+}
+</style>

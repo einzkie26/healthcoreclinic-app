@@ -1,0 +1,581 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\mauiprogram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:mauiprogram.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\receptionist\\invoices.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\receptionist\\invoices.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:healthcoreclinic-app-demo.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\receptionist\\billing.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\receptionist\\billing.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\layout\\adminlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\layout\\adminlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\wwwroot\\app.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:wwwroot\\app.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\superadmin\\accesscontrol.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\superadmin\\accesscontrol.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\superadmin\\subscriptions.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\superadmin\\subscriptions.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\login.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\login.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\layout\\superadminlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\layout\\superadminlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\layout\\receptionistlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\layout\\receptionistlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\layout\\doctorlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\layout\\doctorlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\superadmin\\plans.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\superadmin\\plans.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\layout\\mainlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\layout\\mainlayout.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\doctor\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\doctor\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\superadmin\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\superadmin\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\doctor\\medicalrecords.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\doctor\\medicalrecords.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\receptionist\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\receptionist\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\admin\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\admin\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\receptionist\\patients.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\receptionist\\patients.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\doctor\\patients.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\doctor\\patients.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\superadmin\\usermanagement.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\superadmin\\usermanagement.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\dashboard.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\doctor\\schedule.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\doctor\\schedule.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\doctor\\prescriptions.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\doctor\\prescriptions.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\doctor\\appointments.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\doctor\\appointments.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\receptionist\\schedule.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\receptionist\\schedule.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\receptionist\\appointments.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\receptionist\\appointments.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\admin\\resources.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\admin\\resources.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\admin\\invoices.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\admin\\invoices.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\admin\\reportsanalytics.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\admin\\reportsanalytics.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\pages\\superadmin\\reports.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\pages\\superadmin\\reports.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|e:\\projects\\sharp_maui_healthcare\\healthcoreclinic-app-demo\\components\\routes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{4B1B2830-9BB1-E1AF-D7E5-8660ADF82AFE}|healthcoreclinic-app-demo.csproj|solutionrelative:components\\routes.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Appointments.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Components\\Pages\\Admin\\Appointments.razor||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 3,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Billing.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Billing.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Receptionist\\Billing.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Billing.razor",
+              "RelativeToolTip": "Components\\Pages\\Receptionist\\Billing.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:42:12.048Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "AdminLayout.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\AdminLayout.razor",
+              "RelativeDocumentMoniker": "Components\\Layout\\AdminLayout.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\AdminLayout.razor",
+              "RelativeToolTip": "Components\\Layout\\AdminLayout.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:05:47.166Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Invoices.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Invoices.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Receptionist\\Invoices.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Invoices.razor",
+              "RelativeToolTip": "Components\\Pages\\Receptionist\\Invoices.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:42:28.022Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AuthService.cs",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Services\\AuthService.cs",
+              "RelativeDocumentMoniker": "Services\\AuthService.cs",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Services\\AuthService.cs",
+              "RelativeToolTip": "Services\\AuthService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T06:23:09.01Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MauiProgram.cs",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\MauiProgram.cs",
+              "RelativeDocumentMoniker": "MauiProgram.cs",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\MauiProgram.cs",
+              "RelativeToolTip": "MauiProgram.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwBQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T06:23:57.249Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "healthcoreclinic-app-demo.csproj",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj",
+              "RelativeDocumentMoniker": "healthcoreclinic-app-demo.csproj",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\healthcoreclinic-app-demo.csproj",
+              "RelativeToolTip": "healthcoreclinic-app-demo.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-04-16T02:15:06.204Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "Appointments.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Appointments.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Admin\\Appointments.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Appointments.razor",
+              "RelativeToolTip": "Components\\Pages\\Admin\\Appointments.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:06:49.31Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "app.css",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\wwwroot\\app.css",
+              "RelativeDocumentMoniker": "wwwroot\\app.css",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\wwwroot\\app.css",
+              "RelativeToolTip": "wwwroot\\app.css",
+              "ViewState": "AgIAALUDAAAAAAAAAABBwEEBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-04-14T06:41:06.841Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AccessControl.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\AccessControl.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\SuperAdmin\\AccessControl.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\AccessControl.razor",
+              "RelativeToolTip": "Components\\Pages\\SuperAdmin\\AccessControl.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAPEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T10:03:51.008Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Subscriptions.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\Subscriptions.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\SuperAdmin\\Subscriptions.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\Subscriptions.razor",
+              "RelativeToolTip": "Components\\Pages\\SuperAdmin\\Subscriptions.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T10:03:22.209Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Login.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Login.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Login.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Login.razor",
+              "RelativeToolTip": "Components\\Pages\\Login.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T06:18:35.963Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "SuperAdminLayout.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\SuperAdminLayout.razor",
+              "RelativeDocumentMoniker": "Components\\Layout\\SuperAdminLayout.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\SuperAdminLayout.razor",
+              "RelativeToolTip": "Components\\Layout\\SuperAdminLayout.razor",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAADQAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T10:02:31.439Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "ReceptionistLayout.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\ReceptionistLayout.razor",
+              "RelativeDocumentMoniker": "Components\\Layout\\ReceptionistLayout.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\ReceptionistLayout.razor",
+              "RelativeToolTip": "Components\\Layout\\ReceptionistLayout.razor",
+              "ViewState": "AgIAAB4AAAAAAAAAAAAswDcAAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:16:03.499Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "DoctorLayout.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\DoctorLayout.razor",
+              "RelativeDocumentMoniker": "Components\\Layout\\DoctorLayout.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\DoctorLayout.razor",
+              "RelativeToolTip": "Components\\Layout\\DoctorLayout.razor",
+              "ViewState": "AgIAABsAAAAAAAAAAAAswAgAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:42:54.576Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "Plans.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\Plans.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\SuperAdmin\\Plans.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\Plans.razor",
+              "RelativeToolTip": "Components\\Pages\\SuperAdmin\\Plans.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T10:03:34.365Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "MainLayout.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\MainLayout.razor",
+              "RelativeDocumentMoniker": "Components\\Layout\\MainLayout.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Layout\\MainLayout.razor",
+              "RelativeToolTip": "Components\\Layout\\MainLayout.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T06:35:28.564Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "Dashboard.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Dashboard.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Doctor\\Dashboard.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Dashboard.razor",
+              "RelativeToolTip": "Components\\Pages\\Doctor\\Dashboard.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-15T00:55:21.829Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "Dashboard.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\Dashboard.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\SuperAdmin\\Dashboard.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\Dashboard.razor",
+              "RelativeToolTip": "Components\\Pages\\SuperAdmin\\Dashboard.razor",
+              "ViewState": "AgIAADMAAAAAAAAAAAAswEUAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-15T00:54:00.295Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "MedicalRecords.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\MedicalRecords.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Doctor\\MedicalRecords.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\MedicalRecords.razor",
+              "RelativeToolTip": "Components\\Pages\\Doctor\\MedicalRecords.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAPwBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-15T00:30:28.998Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "Dashboard.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Dashboard.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Receptionist\\Dashboard.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Dashboard.razor",
+              "RelativeToolTip": "Components\\Pages\\Receptionist\\Dashboard.razor",
+              "ViewState": "AgIAAA8AAAAAAAAAAIBJwEIBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-15T00:54:56.261Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "Dashboard.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Dashboard.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Admin\\Dashboard.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Dashboard.razor",
+              "RelativeToolTip": "Components\\Pages\\Admin\\Dashboard.razor",
+              "ViewState": "AgIAABgAAAAAAAAAAIBJwD0BAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-15T00:54:31.939Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "Patients.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Patients.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Receptionist\\Patients.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Patients.razor",
+              "RelativeToolTip": "Components\\Pages\\Receptionist\\Patients.razor",
+              "ViewState": "AgIAABAAAAAAAAAAAIBJwIwBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-15T00:51:07.94Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "Patients.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Patients.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Doctor\\Patients.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Patients.razor",
+              "RelativeToolTip": "Components\\Pages\\Doctor\\Patients.razor",
+              "ViewState": "AgIAAA8AAAAAAAAAAIBJwHUBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-15T00:51:31.658Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "UserManagement.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\UserManagement.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\SuperAdmin\\UserManagement.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\UserManagement.razor",
+              "RelativeToolTip": "Components\\Pages\\SuperAdmin\\UserManagement.razor",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAswAsAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T10:03:00.659Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "Dashboard.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Dashboard.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Dashboard.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Dashboard.razor",
+              "RelativeToolTip": "Components\\Pages\\Dashboard.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T08:51:08.376Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "Schedule.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Schedule.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Doctor\\Schedule.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Schedule.razor",
+              "RelativeToolTip": "Components\\Pages\\Doctor\\Schedule.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAP4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:45:20.942Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "Prescriptions.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Prescriptions.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Doctor\\Prescriptions.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Prescriptions.razor",
+              "RelativeToolTip": "Components\\Pages\\Doctor\\Prescriptions.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:45:06.693Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "Appointments.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Appointments.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Doctor\\Appointments.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Doctor\\Appointments.razor",
+              "RelativeToolTip": "Components\\Pages\\Doctor\\Appointments.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:43:14.834Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "Schedule.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Schedule.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Receptionist\\Schedule.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Schedule.razor",
+              "RelativeToolTip": "Components\\Pages\\Receptionist\\Schedule.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAO8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:42:43.946Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "Appointments.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Appointments.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Receptionist\\Appointments.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Receptionist\\Appointments.razor",
+              "RelativeToolTip": "Components\\Pages\\Receptionist\\Appointments.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:41:58.226Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "Resources.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Resources.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Admin\\Resources.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Resources.razor",
+              "RelativeToolTip": "Components\\Pages\\Admin\\Resources.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAALMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:06:32.909Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "Invoices.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Invoices.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Admin\\Invoices.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\Invoices.razor",
+              "RelativeToolTip": "Components\\Pages\\Admin\\Invoices.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACYBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:07:31.706Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "ReportsAnalytics.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\ReportsAnalytics.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\Admin\\ReportsAnalytics.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\Admin\\ReportsAnalytics.razor",
+              "RelativeToolTip": "Components\\Pages\\Admin\\ReportsAnalytics.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T15:07:12.873Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "Reports.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\Reports.razor",
+              "RelativeDocumentMoniker": "Components\\Pages\\SuperAdmin\\Reports.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Pages\\SuperAdmin\\Reports.razor",
+              "RelativeToolTip": "Components\\Pages\\SuperAdmin\\Reports.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8BAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T10:04:11.246Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "Routes.razor",
+              "DocumentMoniker": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Routes.razor",
+              "RelativeDocumentMoniker": "Components\\Routes.razor",
+              "ToolTip": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Components\\Routes.razor",
+              "RelativeToolTip": "Components\\Routes.razor",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-04-14T06:25:10.8Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

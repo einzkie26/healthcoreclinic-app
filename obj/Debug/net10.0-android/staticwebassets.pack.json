@@ -1,0 +1,49 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\Admin\\.nuget\\packages\\microsoft.aspnetcore.components.webview\\10.0.0\\staticwebassets\\blazor.modules.json",
+      "PackagePath": "staticwebassets\\_framework\\blazor.modules.json"
+    },
+    {
+      "Id": "C:\\Users\\Admin\\.nuget\\packages\\microsoft.aspnetcore.components.webview\\10.0.0\\staticwebassets\\blazor.webview.js",
+      "PackagePath": "staticwebassets\\_framework\\blazor.webview.js"
+    },
+    {
+      "Id": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\Resources\\Images\\hc_logo_transparent.svg",
+      "PackagePath": "staticwebassets\\images\\hc_logo_transparent.svg"
+    },
+    {
+      "Id": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\obj\\Debug\\net10.0-android\\scopedcss\\bundle\\healthcoreclinic-app-demo.styles.css",
+      "PackagePath": "staticwebassets\\healthcoreclinic-app-demo.styles.css"
+    },
+    {
+      "Id": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\wwwroot\\app.css",
+      "PackagePath": "staticwebassets\\app.css"
+    },
+    {
+      "Id": "E:\\projects\\sharp_MAUI_HEALTHCARE\\healthcoreclinic-app-demo\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "obj\\Debug\\net10.0-android\\staticwebassets\\msbuild.build.healthcoreclinic-app-demo.props",
+      "PackagePath": "build\\healthcoreclinic-app-demo.props"
+    },
+    {
+      "Id": "obj\\Debug\\net10.0-android\\staticwebassets\\msbuild.buildMultiTargeting.healthcoreclinic-app-demo.props",
+      "PackagePath": "buildMultiTargeting\\healthcoreclinic-app-demo.props"
+    },
+    {
+      "Id": "obj\\Debug\\net10.0-android\\staticwebassets\\msbuild.buildTransitive.healthcoreclinic-app-demo.props",
+      "PackagePath": "buildTransitive\\healthcoreclinic-app-demo.props"
+    },
+    {
+      "Id": "obj\\Debug\\net10.0-android\\staticwebassets\\msbuild.healthcoreclinic-app-demo.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net10.0-android\\staticwebassets\\msbuild.healthcoreclinic-app-demo.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

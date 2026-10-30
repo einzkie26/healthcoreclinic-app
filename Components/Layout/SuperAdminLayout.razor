@@ -1,0 +1,292 @@
+@inherits LayoutComponentBase
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="layout-container role-superadmin">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <img src="images/hc_logo_transparent.svg" alt="HealthCore logo" class="sidebar-logo" />
+                <p class="sidebar-title">HealthCore</p>
+            </div>
+            <p class="user-role">SuperAdmin Portal</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="@AppRoutes.SuperAdmin" class="menu-item @IsActive(AppRoutes.SuperAdmin)">
+                Dashboard
+            </a>
+            <a href="@AppRoutes.SuperAdminUsers" class="menu-item @IsActive(AppRoutes.SuperAdminUsers)">
+                User Management
+            </a>
+            <a href="@AppRoutes.SuperAdminSubscriptions" class="menu-item @IsActive(AppRoutes.SuperAdminSubscriptions)">
+                Subscription Management
+            </a>
+            <a href="@AppRoutes.SuperAdminResources" class="menu-item @IsActive(AppRoutes.SuperAdminResources)">
+                Resource Management
+            </a>
+            <a href="@AppRoutes.SuperAdminPlans" class="menu-item @IsActive(AppRoutes.SuperAdminPlans)">
+                Subscription Plan
+            </a>
+            <a href="@AppRoutes.SuperAdminAccessControl" class="menu-item @IsActive(AppRoutes.SuperAdminAccessControl)">
+                Access Control
+            </a>
+            <a href="@AppRoutes.SuperAdminReports" class="menu-item @IsActive(AppRoutes.SuperAdminReports)">
+                Reports
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="theme-toggle-btn" onclick="toggleTheme()">Theme Toggle</button>
+            <button class="logout-btn" @onclick="HandleLogout">Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <button class="notification-fab" @onclick="OpenNotifications" title="Notifications" aria-label="Notifications">
+            <span class="notification-bell" aria-hidden="true"></span>
+            @if (UnreadNotificationCount > 0)
+            {
+                <span class="notification-badge">@UnreadNotificationCount</span>
+            }
+        </button>
+        @Body
+    </main>
+</div>
+
+@if (showNotificationsModal)
+{
+    <div class="modal-overlay" @onclick="CloseNotifications">
+        <div class="modal-content notification-modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Notifications</h2>
+                <button class="close-btn" @onclick="CloseNotifications" aria-label="Close">
+                    <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @if (Notifications.Count == 0)
+                {
+                    <p class="notification-empty">No notifications yet.</p>
+                }
+                else
+                {
+                    <div class="notification-list">
+                        @foreach (var item in Notifications)
+                        {
+                            <button class="notification-item @(item.IsRead ? "read" : "unread")" @onclick="() => MarkAsRead(item.Id)">
+                                <div class="notification-line">
+                                    <strong>@item.Action @item.EntityType</strong>
+                                    <span class="notification-time">@item.TimestampUtc.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</span>
+                                </div>
+                                <div class="notification-line">
+                                    <span>@item.AdminName - @item.EntityName</span>
+                                </div>
+                                <div class="notification-line detail">
+                                    <span>@item.Details</span>
+                                </div>
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool showNotificationsModal;
+    private List<AuthService.AdminActivityItem> Notifications = new();
+    private int UnreadNotificationCount;
+
+    protected override void OnInitialized()
+    {
+        if (!Auth.IsAuthenticated || (Auth.CurrentRole != "Super Admin" && Auth.CurrentRole != "SuperAdmin"))
+        {
+            Nav.NavigateTo(AppRoutes.Login);
+        }
+
+        RefreshNotifications();
+    }
+
+    void HandleLogout()
+    {
+        Auth.Logout();
+        Nav.NavigateTo(AppRoutes.Login);
+    }
+
+    string IsActive(string url)
+    {
+        var uri = new Uri(Nav.Uri);
+        return uri.LocalPath == url ? "active" : "";
+    }
+
+    private void OpenNotifications()
+    {
+        RefreshNotifications();
+        showNotificationsModal = true;
+    }
+
+    private void CloseNotifications()
+    {
+        showNotificationsModal = false;
+    }
+
+    private void MarkAsRead(int id)
+    {
+        Auth.MarkAdminActivityAsRead(id);
+        RefreshNotifications();
+    }
+
+    private void RefreshNotifications()
+    {
+        Notifications = Auth.GetRecentAdminActivities(30);
+        UnreadNotificationCount = Auth.GetUnreadAdminActivityCount();
+    }
+}
+
+<style>
+.notification-fab {
+    position: fixed;
+    top: 14px;
+    right: 18px;
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 999px;
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+    cursor: pointer;
+    z-index: 1200;
+}
+
+.notification-bell {
+    display: inline-block;
+    width: 18px;
+    height: 14px;
+    border: 2px solid #fff;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+    border-bottom: none;
+    position: relative;
+    margin-top: 8px;
+}
+
+.notification-bell::before {
+    content: "";
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    bottom: -7px;
+    height: 2px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.notification-bell::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    bottom: -11px;
+    width: 4px;
+    height: 4px;
+    background: #fff;
+    border-radius: 50%;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+}
+
+.notification-modal {
+    max-width: 640px;
+    width: 92%;
+    max-height: 80vh;
+    overflow: hidden;
+}
+
+.notification-list {
+    display: grid;
+    gap: 10px;
+    max-height: 62vh;
+    overflow: auto;
+}
+
+.notification-item {
+    text-align: left;
+    border: 1px solid #dbe2ea;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.notification-item.unread {
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+.notification-item.read {
+    opacity: 0.85;
+}
+
+.notification-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 13px;
+    color: #1f2937;
+}
+
+.notification-line.detail {
+    margin-top: 4px;
+    color: #4b5563;
+}
+
+.notification-time {
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.notification-empty {
+    color: #6b7280;
+    margin: 0;
+}
+
+[data-theme="dark"] .notification-fab {
+    background: #1d4ed8;
+}
+
+[data-theme="dark"] .notification-item {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .notification-item.unread {
+    background: #1e3a8a;
+    border-color: #60a5fa;
+}
+
+[data-theme="dark"] .notification-line {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .notification-line.detail,
+[data-theme="dark"] .notification-time,
+[data-theme="dark"] .notification-empty {
+    color: #9ca3af;
+}
+</style>

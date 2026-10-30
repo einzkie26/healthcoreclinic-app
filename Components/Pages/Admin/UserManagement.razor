@@ -1,0 +1,1770 @@
+@page "/admin/users"
+@layout AdminLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Models
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="users-container">
+    <div class="page-header">
+        <div>
+            <h1>Staff User Management</h1>
+            <p>Create and manage doctors and receptionists</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" @onclick="OpenDeactivatedUsersModal" disabled="@isLoading">
+                <span class="ui-icon ui-icon-users" aria-hidden="true"></span>
+                <span>Deactivated Users (@DeactivatedUsers.Count)</span>
+            </button>
+            <button class="btn btn-primary" @onclick="OpenCreateUserModal" disabled="@(isLoading || (!CanCreateDoctor && !CanCreateReceptionist))">
+                <span class="icon ui-icon ui-icon-plus" aria-hidden="true"></span>
+                <span>Create Staff Account</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="limit-summary">
+        <div class="limit-card @(DoctorLimit?.IsAtLimit == true ? "at-limit" : "")">
+            <span class="limit-role">Doctors</span>
+            <strong>@(DoctorLimit?.LimitText ?? "0/Unlimited")</strong>
+            <span>@(DoctorLimit?.RemainingText ?? "Unlimited")</span>
+        </div>
+        <div class="limit-card @(ReceptionistLimit?.IsAtLimit == true ? "at-limit" : "")">
+            <span class="limit-role">Receptionists</span>
+            <strong>@(ReceptionistLimit?.LimitText ?? "0/Unlimited")</strong>
+            <span>@(ReceptionistLimit?.RemainingText ?? "Unlimited")</span>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(messageText))
+    {
+        <div class="status-message @(isSuccess ? "success" : "error")">
+            <span class="msg-icon">
+                <span class="ui-icon @(isSuccess ? "ui-icon-check" : "ui-icon-alert")" aria-hidden="true"></span>
+            </span>
+            <span>@messageText</span>
+            <button class="msg-close" @onclick="() => messageText = null" aria-label="Dismiss message">
+                <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+            </button>
+        </div>
+    }
+
+    <div class="tabs-container">
+        <div class="tab-buttons">
+            <button class="tab-btn @(selectedTab == "all" ? "active" : "")" @onclick="@((e) => SelectTab("all"))">
+                All Staff
+            </button>
+            <button class="tab-btn @(selectedTab == "doctor" ? "active" : "")" @onclick="@((e) => SelectTab("doctor"))">
+                Doctors
+            </button>
+            <button class="tab-btn @(selectedTab == "receptionist" ? "active" : "")" @onclick="@((e) => SelectTab("receptionist"))">
+                Receptionists
+            </button>
+        </div>
+        <div class="ownership-filter">
+            <label for="ownershipFilter">Owner Filter</label>
+            <select id="ownershipFilter" @bind="ownershipFilter">
+                <option value="all">All</option>
+                <option value="mine">Created by you</option>
+                <option value="others">Created by others</option>
+            </select>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading staff users...</p>
+        </div>
+    }
+    else if (FilteredUsers == null || FilteredUsers.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><span class="ui-icon ui-icon-users" aria-hidden="true"></span></div>
+            <h3>No Staff Users</h3>
+            <p>@(selectedTab == "all" ? "Create your first staff member" : $"No {selectedTab}s created yet")</p>
+            <button class="btn btn-primary" @onclick="OpenCreateUserModal">
+                Create Staff Account
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="users-grid">
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Added By</th>
+                            <th>Created</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in FilteredUsers)
+                        {
+                            <tr class="clickable-row" @onclick="() => OpenUserDetailsModal(user)">
+                                <td class="font-weight-bold">@user.FullName</td>
+                                <td>@user.Email</td>
+                                <td>
+                                    <span class="role-badge @GetRoleBadgeClass(user.Role?.RoleName)">
+                                        @user.Role?.RoleName
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge @(user.IsActive ? "active" : "inactive")">
+                                        @(user.IsActive ? "Active" : "Inactive")
+                                    </span>
+                                </td>
+                                <td>@GetCreatorName(user)</td>
+                                <td>@user.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td class="actions-col">
+                                    @if (CanManageUser(user))
+                                    {
+                                        <button class="action-btn edit" @onclick="() => OpenEditUserModal(user)" @onclick:stopPropagation title="Edit">
+                                            <span class="ui-icon ui-icon-edit" aria-hidden="true"></span>
+                                        </button>
+                                        <button class="action-btn toggle" @onclick="() => ConfirmToggleUser(user)" @onclick:stopPropagation title="@(user.IsActive ? "Deactivate" : "Activate")">
+                                            <span class="ui-icon @(user.IsActive ? "ui-icon-close" : "ui-icon-check")" aria-hidden="true"></span>
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <!-- Create/Edit User Modal -->
+    @if (showUserModal)
+    {
+        <div class="modal-overlay" @onclick="CloseUserModal">
+            <div class="modal-content" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>@(editingUser != null ? "Edit Staff Account" : "Create New Staff Account")</h2>
+                    <button class="close-btn" @onclick="CloseUserModal" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    @if (!string.IsNullOrWhiteSpace(modalMessage))
+                    {
+                        <div class="status-message @(modalSuccess ? "success" : "error")">
+                            <span class="msg-icon">
+                                <span class="ui-icon @(modalSuccess ? "ui-icon-check" : "ui-icon-alert")" aria-hidden="true"></span>
+                            </span>
+                            <span>@modalMessage</span>
+                        </div>
+                    }
+
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input @bind="formData.FullName" 
+                               @bind:event="oninput"
+                               placeholder="Enter full name" 
+                               disabled="@isSubmitting" />
+                        @if (errors.ContainsKey("name") && !string.IsNullOrEmpty(errors["name"]))
+                        {
+                            <span class="error-text">@errors["name"]</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input @bind="formData.Email" 
+                               @bind:event="oninput"
+                               type="email"
+                               placeholder="name@clinic.com" 
+                               disabled="@isSubmitting" />
+                        @if (errors.ContainsKey("email") && !string.IsNullOrEmpty(errors["email"]))
+                        {
+                            <span class="error-text">@errors["email"]</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label>Role *</label>
+                        <select @bind="formData.Role" disabled="@(editingUser != null || isSubmitting)">
+                            <option value="">-- Select Role --</option>
+                            <option value="Doctor" disabled="@(DoctorLimit?.IsAtLimit == true)">Doctor (@(DoctorLimit?.LimitText ?? "0/Unlimited"))</option>
+                            <option value="Receptionist" disabled="@(ReceptionistLimit?.IsAtLimit == true)">Receptionist (@(ReceptionistLimit?.LimitText ?? "0/Unlimited"))</option>
+                        </select>
+                        @if (errors.ContainsKey("role") && !string.IsNullOrEmpty(errors["role"]))
+                        {
+                            <span class="error-text">@errors["role"]</span>
+                        }
+                    </div>
+
+                    @if (editingUser == null)
+                    {
+                        <div class="form-group">
+                            <label>Temporary Password *</label>
+                            <input @bind="formData.Password" 
+                                   @bind:event="oninput"
+                                   type="password" 
+                                   placeholder="Min 6 characters" 
+                                   disabled="@isSubmitting" />
+                            @if (errors.ContainsKey("password") && !string.IsNullOrEmpty(errors["password"]))
+                            {
+                                <span class="error-text">@errors["password"]</span>
+                            }
+                        </div>
+
+                        <div class="form-info">
+                            <p><strong>Password Note:</strong> Share this temporary password with the staff member. They should change it after first login.</p>
+                        </div>
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseUserModal" disabled="@isSubmitting">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" @onclick="SaveUser" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="loader"></span>
+                            <span>@(editingUser != null ? "Updating..." : "Creating...")</span>
+                        }
+                        else
+                        {
+                            <span>@(editingUser != null ? "Update Account" : "Create Account")</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- User Details Modal -->
+    @if (showDetailsModal && viewingUser != null)
+    {
+        <div class="modal-overlay" @onclick="() => showDetailsModal = false">
+            <div class="modal-content details-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Staff Account Details</h2>
+                    <button class="close-btn" @onclick="() => showDetailsModal = false" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Full Name</label>
+                            <p>@viewingUser.FullName</p>
+                        </div>
+
+                        <div class="detail-item">
+                            <label>Email</label>
+                            <p>@viewingUser.Email</p>
+                        </div>
+
+                        <div class="detail-item">
+                            <label>Role</label>
+                            <p>
+                                <span class="role-badge @GetRoleBadgeClass(viewingUser.Role?.RoleName)">
+                                    @viewingUser.Role?.RoleName
+                                </span>
+                            </p>
+                        </div>
+
+                        <div class="detail-item">
+                            <label>Status</label>
+                            <p>
+                                <span class="status-badge @(viewingUser.IsActive ? "active" : "inactive")">
+                                    @(viewingUser.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </p>
+                        </div>
+
+                        <div class="detail-item">
+                            <label>User ID</label>
+                            <p class="text-muted">@viewingUser.UserID</p>
+                        </div>
+
+                        <div class="detail-item">
+                            <label>Account Created</label>
+                            <p class="text-muted">@viewingUser.CreatedAt.ToString("MMM dd, yyyy - HH:mm")</p>
+                        </div>
+
+                        <div class="detail-item">
+                            <label>Added By</label>
+                            <p class="text-muted">@GetCreatorName(viewingUser)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    @if (!viewingUser.IsActive)
+                    {
+                        <button class="btn btn-success" @onclick="() => ConfirmReactivateFromDetails(viewingUser)">
+                            Reactivate Account
+                        </button>
+                    }
+                    <button class="btn btn-secondary" @onclick="() => showDetailsModal = false">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Deactivated Users Modal -->
+    @if (showDeactivatedModal)
+    {
+        <div class="modal-overlay" @onclick="CloseDeactivatedUsersModal">
+            <div class="modal-content deactivated-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Deactivated Users</h2>
+                    <button class="close-btn" @onclick="CloseDeactivatedUsersModal" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    @if (DeactivatedUsers.Count == 0)
+                    {
+                        <div class="empty-state compact">
+                            <div class="empty-icon"><span class="ui-icon ui-icon-users" aria-hidden="true"></span></div>
+                            <h3>No Deactivated Users</h3>
+                            <p>Inactive staff accounts will appear here after they are deactivated.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="deactivated-list">
+                            @foreach (var user in DeactivatedUsers)
+                            {
+                                <div class="deactivated-row">
+                                    <div>
+                                        <strong>@user.FullName</strong>
+                                        <span>@user.Email</span>
+                                    </div>
+                                    <span class="role-badge @GetRoleBadgeClass(user.Role?.RoleName)">
+                                        @user.Role?.RoleName
+                                    </span>
+                                    <div class="deactivated-actions">
+                                        <button class="btn btn-success" @onclick="() => ConfirmReactivateFromList(user)">
+                                            Reactivate
+                                        </button>
+                                        <button class="btn btn-danger" @onclick="() => ConfirmDeleteDeactivatedUser(user)">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseDeactivatedUsersModal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Confirm Delete Deactivated User Modal -->
+    @if (showConfirmDelete && userToDelete != null)
+    {
+        <div class="modal-overlay" @onclick="() => showConfirmDelete = false">
+            <div class="modal-content confirm-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Delete Deactivated Account</h2>
+                    <button class="close-btn" @onclick="() => showConfirmDelete = false" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Delete <strong>@userToDelete.FullName</strong>'s deactivated account permanently?</p>
+                    <p class="text-warning">This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => showConfirmDelete = false" disabled="@isSubmitting">
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger" @onclick="DeleteDeactivatedUser" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="loader"></span>
+                            <span>Deleting...</span>
+                        }
+                        else
+                        {
+                            <span>Delete Account</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Confirm Toggle User Modal -->
+    @if (showConfirmToggle && userToToggle != null)
+    {
+        <div class="modal-overlay" @onclick="() => showConfirmToggle = false">
+            <div class="modal-content confirm-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>@(userToToggle.IsActive ? "Deactivate" : "Activate") Account</h2>
+                    <button class="close-btn" @onclick="() => showConfirmToggle = false" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to <strong>@(userToToggle.IsActive ? "deactivate" : "activate")</strong> <strong>@userToToggle.FullName</strong>'s account?</p>
+                    @if (userToToggle.IsActive)
+                    {
+                        <p class="text-warning">This user will no longer be able to access the system.</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => showConfirmToggle = false" disabled="@isSubmitting">
+                        Cancel
+                    </button>
+                    <button class="btn @(userToToggle.IsActive ? "btn-danger" : "btn-success")" @onclick="ToggleUser" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="loader"></span>
+                            <span>@(userToToggle.IsActive ? "Deactivating..." : "Activating...")</span>
+                        }
+                        else
+                        {
+                            <span>@(userToToggle.IsActive ? "Deactivate" : "Activate")</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<User>? allUsers;
+    private User? editingUser;
+    private User? viewingUser;
+    private User? userToToggle;
+    private User? userToDelete;
+    private bool showUserModal;
+    private bool showDetailsModal;
+    private bool showConfirmToggle;
+    private bool showDeactivatedModal;
+    private bool showConfirmDelete;
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string? messageText;
+    private bool isSuccess;
+    private string? modalMessage;
+    private bool modalSuccess;
+    private string selectedTab = "all";
+    private string ownershipFilter = "all";
+    private bool CanCreateDoctor = true;
+    private bool CanCreateReceptionist = true;
+    private StaffLimitInfo? DoctorLimit;
+    private StaffLimitInfo? ReceptionistLimit;
+    private Dictionary<string, string> errors = new()
+    {
+        { "name", "" },
+        { "email", "" },
+        { "role", "" },
+        { "password", "" }
+    };
+
+    private class FormData
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private FormData formData = new();
+
+    private List<User> DeactivatedUsers => allUsers?
+        .Where(u => !u.IsActive)
+        .Where(OwnershipFilterPredicate)
+        .OrderByDescending(u => u.CreatedAt)
+        .ToList() ?? new List<User>();
+
+    private List<User> FilteredUsers
+    {
+        get
+        {
+            if (allUsers == null)
+                return new List<User>();
+
+            return selectedTab switch
+            {
+                "doctor" => allUsers.Where(u => u.IsActive && u.Role?.RoleName == "Doctor").Where(OwnershipFilterPredicate).ToList(),
+                "receptionist" => allUsers.Where(u => u.IsActive && u.Role?.RoleName == "Receptionist").Where(OwnershipFilterPredicate).ToList(),
+                _ => allUsers.Where(u => u.IsActive).Where(OwnershipFilterPredicate).ToList()
+            };
+        }
+    }
+
+    private bool OwnershipFilterPredicate(User user) => ownershipFilter switch
+    {
+        "mine" => user.CreatedByAdminID == Auth.CurrentUserID,
+        "others" => user.CreatedByAdminID != Auth.CurrentUserID,
+        _ => true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        isLoading = true;
+        try
+        {
+            var doctors = await Auth.GetUsersByRoleAsync("Doctor", includeInactive: true);
+            var receptionists = await Auth.GetUsersByRoleAsync("Receptionist", includeInactive: true);
+            allUsers = doctors.Concat(receptionists).OrderByDescending(u => u.CreatedAt).ToList();
+
+            var doctorLimit = await Auth.CanCreateStaffAsync(Auth.CurrentUserID, "Doctor");
+            var receptionistLimit = await Auth.CanCreateStaffAsync(Auth.CurrentUserID, "Receptionist");
+            CanCreateDoctor = doctorLimit.Allowed;
+            CanCreateReceptionist = receptionistLimit.Allowed;
+            DoctorLimit = await Auth.GetStaffLimitAsync(Auth.CurrentUserID, "Doctor");
+            ReceptionistLimit = await Auth.GetStaffLimitAsync(Auth.CurrentUserID, "Receptionist");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading users: {ex.Message}");
+            messageText = "Failed to load staff users.";
+            isSuccess = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void SelectTab(string tab)
+    {
+        selectedTab = tab;
+    }
+
+    private void OpenCreateUserModal()
+    {
+        editingUser = null;
+        formData = new FormData();
+        ClearErrors();
+        modalMessage = null;
+        if (!CanCreateDoctor && !CanCreateReceptionist)
+        {
+            messageText = "Plan limit reached. Upgrade your subscription to add more staff.";
+            isSuccess = false;
+            return;
+        }
+        showUserModal = true;
+        System.Diagnostics.Debug.WriteLine($"OK Create modal opened. FormData: Name='{formData.FullName}', Email='{formData.Email}', Role='{formData.Role}', Password='{formData.Password}'");
+    }
+
+    private void OpenEditUserModal(User user)
+    {
+        if (!CanManageUser(user))
+        {
+            messageText = "You can only edit staff accounts created by your admin account.";
+            isSuccess = false;
+            return;
+        }
+
+        editingUser = user;
+        formData = new FormData
+        {
+            FullName = user.FullName ?? string.Empty,
+            Email = user.Email ?? string.Empty,
+            Role = user.Role?.RoleName ?? string.Empty
+        };
+        ClearErrors();
+        modalMessage = null;
+        showUserModal = true;
+    }
+
+    private void OpenUserDetailsModal(User user)
+    {
+        viewingUser = user;
+        showDetailsModal = true;
+    }
+
+    private void OpenDeactivatedUsersModal()
+    {
+        showDeactivatedModal = true;
+    }
+
+    private void CloseDeactivatedUsersModal()
+    {
+        showDeactivatedModal = false;
+    }
+
+    private void CloseUserModal()
+    {
+        showUserModal = false;
+        editingUser = null;
+        formData = new FormData();
+        errors.Clear();
+    }
+
+    private void ConfirmToggleUser(User user)
+    {
+        if (!CanManageUser(user))
+        {
+            messageText = "You can only activate/deactivate staff accounts created by your admin account.";
+            isSuccess = false;
+            return;
+        }
+
+        userToToggle = user;
+        showConfirmToggle = true;
+    }
+
+    private void ConfirmReactivateFromList(User user)
+    {
+        showDeactivatedModal = false;
+        ConfirmToggleUser(user);
+    }
+
+    private void ConfirmReactivateFromDetails(User user)
+    {
+        showDetailsModal = false;
+        ConfirmToggleUser(user);
+    }
+
+    private void ConfirmDeleteDeactivatedUser(User user)
+    {
+        if (user.IsActive)
+            return;
+
+        showDeactivatedModal = false;
+        userToDelete = user;
+        showConfirmDelete = true;
+    }
+
+    private void ClearErrors()
+    {
+        errors = new Dictionary<string, string>
+        {
+            { "name", "" },
+            { "email", "" },
+            { "role", "" },
+            { "password", "" }
+        };
+    }
+
+    private bool ValidateForm()
+    {
+        ClearErrors();
+
+        if (string.IsNullOrWhiteSpace(formData.FullName))
+            errors["name"] = "Full name is required.";
+        else if (formData.FullName.Length < 3)
+            errors["name"] = "Full name must be at least 3 characters.";
+
+        if (string.IsNullOrWhiteSpace(formData.Email))
+            errors["email"] = "Email is required.";
+        else if (!Auth.IsValidEmail(formData.Email))
+            errors["email"] = "Please enter a valid email address.";
+
+        if (string.IsNullOrWhiteSpace(formData.Role))
+            errors["role"] = "Please select a role.";
+
+        if (editingUser == null)
+        {
+            if (string.IsNullOrWhiteSpace(formData.Password))
+                errors["password"] = "Password is required.";
+            else if (!Auth.IsValidPassword(formData.Password))
+                errors["password"] = "Password must be at least 6 characters.";
+        }
+
+        var hasErrors = errors.Values.Any(e => !string.IsNullOrEmpty(e));
+        System.Diagnostics.Debug.WriteLine($"ValidateForm result: {!hasErrors} | Errors: {string.Join(", ", errors.Where(e => !string.IsNullOrEmpty(e.Value)).Select(e => $"{e.Key}={e.Value}"))}");
+        
+        return !hasErrors;
+    }
+
+    private async Task SaveUser()
+    {
+        isSubmitting = true;
+        modalMessage = null;
+        modalSuccess = false;
+        await InvokeAsync(StateHasChanged);
+
+        if (!ValidateForm())
+        {
+            modalSuccess = false;
+            modalMessage = "Please fix the errors above.";
+            System.Diagnostics.Debug.WriteLine($"Validation failed. Errors: {string.Join(", ", errors.Where(e => !string.IsNullOrEmpty(e.Value)).Select(e => e.Value))}");
+            isSubmitting = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        try
+        {
+            await Task.Delay(400);
+
+            if (editingUser != null)
+            {
+                var result = await Auth.UpdateStaffUserAsync(
+                    editingUser.UserID,
+                    formData.FullName ?? string.Empty,
+                    formData.Email ?? string.Empty,
+                    editingUser.IsActive,
+                    Auth.CurrentUserID);
+
+                modalSuccess = result.Success;
+                modalMessage = result.Message;
+
+                if (result.Success)
+                {
+                    await Task.Delay(800);
+                    CloseUserModal();
+                    messageText = result.Message;
+                    isSuccess = true;
+                    await LoadUsers();
+                }
+            }
+            else
+            {
+                var limitCheck = await Auth.CanCreateStaffAsync(Auth.CurrentUserID, formData.Role ?? string.Empty);
+                if (!limitCheck.Allowed)
+                {
+                    modalSuccess = false;
+                    modalMessage = limitCheck.Message;
+                    isSubmitting = false;
+                    await InvokeAsync(StateHasChanged);
+                    return;
+                }
+
+                var result = await Auth.CreateUserAsync(
+                    formData.FullName ?? string.Empty,
+                    formData.Email ?? string.Empty,
+                    formData.Password ?? string.Empty,
+                    formData.Role ?? string.Empty,
+                    Auth.CurrentUserID);
+
+                modalSuccess = result.Success;
+                modalMessage = result.Message;
+
+                if (result.Success)
+                {
+                    await Task.Delay(800);
+                    CloseUserModal();
+                    messageText = result.Message;
+                    isSuccess = true;
+                    await LoadUsers();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            modalSuccess = false;
+            modalMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ToggleUser()
+    {
+        if (userToToggle == null)
+            return;
+
+        isSubmitting = true;
+
+        try
+        {
+            await Task.Delay(400);
+
+            var result = await Auth.UpdateStaffUserAsync(
+                userToToggle.UserID,
+                userToToggle.FullName,
+                userToToggle.Email,
+                !userToToggle.IsActive,
+                Auth.CurrentUserID);
+
+            messageText = result.Message;
+            isSuccess = result.Success;
+
+            if (result.Success)
+            {
+                await Task.Delay(600);
+                showConfirmToggle = false;
+                showDeactivatedModal = false;
+                userToToggle = null;
+                await LoadUsers();
+            }
+        }
+        catch (Exception ex)
+        {
+            messageText = $"Error: {ex.Message}";
+            isSuccess = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task DeleteDeactivatedUser()
+    {
+        if (userToDelete == null || userToDelete.IsActive)
+            return;
+
+        isSubmitting = true;
+
+        try
+        {
+            var result = await Auth.DeleteUserAsync(userToDelete.UserID);
+
+            messageText = result.Message;
+            isSuccess = result.Success;
+
+            if (result.Success)
+            {
+                showConfirmDelete = false;
+                userToDelete = null;
+                await LoadUsers();
+            }
+        }
+        catch (Exception ex)
+        {
+            messageText = $"Error: {ex.Message}";
+            isSuccess = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private string GetRoleBadgeClass(string? roleName)
+    {
+        return roleName switch
+        {
+            "Doctor" => "badge-doctor",
+            "Receptionist" => "badge-receptionist",
+            "Admin" => "badge-admin",
+            "Super Admin" => "badge-admin",
+            _ => "badge-default"
+        };
+    }
+
+    private static string GetCreatorName(User user)
+    {
+        return user.CreatedByAdmin != null
+            ? user.CreatedByAdmin.FullName
+            : "Not recorded";
+    }
+
+    private bool CanManageUser(User user) => user.CreatedByAdminID == Auth.CurrentUserID;
+}
+
+<style>
+.users-container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    gap: 16px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.page-header p {
+    margin: 4px 0 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.limit-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.limit-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 14px;
+    display: grid;
+    gap: 4px;
+    color: #374151;
+}
+
+.limit-card strong {
+    color: #111827;
+    font-size: 22px;
+}
+
+.limit-card.at-limit {
+    border-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.limit-role {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #1f2937;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #d1d5db;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+.btn-success {
+    background: #10b981;
+    color: #fff;
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #059669;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.icon {
+    font-size: 16px;
+}
+
+.status-message {
+    padding: 12px 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    animation: slideIn 0.3s ease;
+}
+
+@@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-message.success {
+    background: #ecfdf5;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.status-message.error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.msg-icon {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.msg-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    color: inherit;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.msg-close:hover {
+    opacity: 1;
+}
+
+.tabs-container {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    color: #1f2937;
+}
+
+.tab-btn.active {
+    color: #4f46e5;
+    border-bottom-color: #4f46e5;
+}
+
+.ownership-filter {
+    display: grid;
+    gap: 6px;
+    min-width: 220px;
+}
+
+.ownership-filter label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.ownership-filter select {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    background: #fff;
+    color: #111827;
+}
+
+.ownership-filter select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+}
+
+.empty-state.compact {
+    padding: 32px 20px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    margin: 0 0 8px 0;
+    color: #1f2937;
+    font-size: 18px;
+}
+
+.empty-state p {
+    margin: 0 0 20px 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.users-grid {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.users-table thead {
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.users-table th {
+    padding: 12px 14px;
+    text-align: left;
+    color: #374151;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.users-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1f2937;
+}
+
+.users-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+.clickable-row:hover {
+    background: #f3f4f6;
+}
+
+.font-weight-bold {
+    font-weight: 600;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.role-badge.badge-doctor {
+    background: #dbeafe;
+    color: #0c4a6e;
+}
+
+.role-badge.badge-receptionist {
+    background: #fef3c7;
+    color: #7c2d12;
+}
+
+.role-badge.badge-admin {
+    background: #f3e8ff;
+    color: #6b21a8;
+}
+
+.role-badge.badge-default {
+    background: #f0f0f0;
+    color: #1f2937;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.inactive {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.actions-col {
+    text-align: center;
+    width: 120px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+.action-btn:hover {
+    background: #e5e7eb;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+}
+
+@@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content.details-modal {
+    max-width: 600px;
+}
+
+.modal-content.confirm-modal {
+    max-width: 400px;
+}
+
+.modal-content.deactivated-modal {
+    max-width: 720px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 18px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body p {
+    margin: 0;
+    color: #1f2937;
+    line-height: 1.6;
+}
+
+.form-group {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    font-size: 12px;
+    color: #374151;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.error-text {
+    display: block;
+    color: #dc2626;
+    font-size: 11px;
+    margin-top: -2px;
+}
+
+.form-info {
+    padding: 12px;
+    background: #e0f2fe;
+    border-left: 4px solid #0284c7;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #0c4a6e;
+    margin-top: 8px;
+}
+
+.form-info p {
+    margin: 0;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-item label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-item p {
+    margin: 0;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.deactivated-list {
+    display: grid;
+    gap: 10px;
+}
+
+.deactivated-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.deactivated-row strong,
+.deactivated-row span {
+    display: block;
+}
+
+.deactivated-row strong {
+    color: #1f2937;
+    margin-bottom: 3px;
+}
+
+.deactivated-row > div > span {
+    color: #6b7280;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.deactivated-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.text-muted {
+    color: #9ca3af;
+}
+
+.text-warning {
+    color: #ea580c;
+    font-size: 13px;
+    margin: 12px 0 0 0;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.loader {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@@media (max-width: 768px) {
+    .users-container {
+        padding: 16px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+
+    .header-actions,
+    .page-header .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .modal-content {
+        max-width: 95%;
+        width: 95%;
+    }
+
+    .users-table {
+        font-size: 12px;
+    }
+
+    .users-table th,
+    .users-table td {
+        padding: 10px 8px;
+    }
+
+    .actions-col {
+        width: auto;
+    }
+
+    .tab-buttons {
+        gap: 4px;
+    }
+
+    .tab-btn {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+
+    .deactivated-row {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .deactivated-actions {
+        flex-direction: column;
+    }
+}
+
+[data-theme="dark"] .users-container {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .page-header h1 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .page-header p {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .users-grid {
+    background: #1f2937;
+}
+
+[data-theme="dark"] .limit-card {
+    background: #1f2937;
+    border-color: #374151;
+    color: #cbd5f5;
+}
+
+[data-theme="dark"] .limit-card strong {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .limit-card.at-limit {
+    background: #451a03;
+    border-color: #92400e;
+}
+
+[data-theme="dark"] .users-table thead {
+    background: #111827;
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .users-table th {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .users-table td {
+    color: #e5e7eb;
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .users-table tbody tr:hover {
+    background: #111827;
+}
+
+[data-theme="dark"] .tab-buttons {
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .tab-btn {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .tab-btn:hover {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .ownership-filter label {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .ownership-filter select {
+    background: #111827;
+    color: #f3f4f6;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .modal-content {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .modal-header h2 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .modal-body p {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select {
+    background: #111827;
+    color: #f3f4f6;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+}
+
+[data-theme="dark"] .form-info {
+    background: #1e3a8a;
+    border-left-color: #0284c7;
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .modal-footer {
+    border-top-color: #374151;
+    background: #111827;
+}
+
+[data-theme="dark"] .empty-state {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .empty-state h3 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .empty-state p {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .detail-item p {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .deactivated-row {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .deactivated-row strong {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .deactivated-row > div > span {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #6b7280;
+}
+</style>

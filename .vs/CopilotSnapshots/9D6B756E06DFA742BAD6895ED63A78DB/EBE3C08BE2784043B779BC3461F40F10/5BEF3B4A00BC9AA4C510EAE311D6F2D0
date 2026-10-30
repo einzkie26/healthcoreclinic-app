@@ -1,0 +1,322 @@
+﻿@page "/doctor"
+@layout DoctorLayout
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+
+<div class="page-container">
+    <div class="page-header-modern">
+        <div class="header-content">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Your daily workload overview</p>
+        </div>
+        <div class="header-date">Last updated: @DateTime.Now.ToString("MMM dd, yyyy HH:mm")</div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon kpi-appointments">📅</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Today's Appointments</p>
+                <p class="kpi-value">12</p>
+                <p class="kpi-change positive">+2 from yesterday</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon kpi-patients">👤</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Patients Seen</p>
+                <p class="kpi-value">8</p>
+                <p class="kpi-change neutral">4 remaining</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon kpi-records">📄</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Pending Records</p>
+                <p class="kpi-value">3</p>
+                <p class="kpi-change positive">To be completed</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon kpi-prescriptions">Rx</div>
+            <div class="kpi-content">
+                <p class="kpi-label">New Prescriptions</p>
+                <p class="kpi-value">5</p>
+                <p class="kpi-change positive">+2 from yesterday</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="chart-card">
+            <h3>Patient Visit Trend</h3>
+            <div class="chart-placeholder green">
+                <svg viewBox="0 0 300 150">
+                    <polyline points="10,120 60,80 110,100 160,40 210,70 260,30" stroke="#11998e" stroke-width="2" fill="none"/>
+                    <polyline points="10,120 60,80 110,100 160,40 210,70 260,30" stroke="#38ef7d" stroke-width="2" fill="none" opacity="0.3"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h3>Schedule Status</h3>
+            <div class="stats-list">
+                <div class="stat-row">
+                    <span class="stat-label">Current Status</span>
+                    <span class="badge badge-success">In Clinic</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Next Break</span>
+                    <span class="badge badge-info">12:00 PM</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Clinic Ends</span>
+                    <span class="badge badge-info">5:00 PM</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">On-call</span>
+                    <span class="badge badge-warning">Yes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.header-content h1 {
+    margin: 0 0 8px 0;
+}
+
+.page-title {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.95em;
+    color: #7f8c8d;
+    margin: 0;
+}
+
+.header-date {
+    font-size: 0.9em;
+    color: #95a5a6;
+    font-weight: 600;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    border-left: 4px solid #11998e;
+    transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+.kpi-icon {
+    font-size: 2.5em;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.kpi-appointments {
+    background-color: #e3f2fd;
+}
+
+.kpi-patients {
+    background-color: #f3e5f5;
+}
+
+.kpi-records {
+    background-color: #e8f5e9;
+}
+
+.kpi-prescriptions {
+    background-color: #fff3e0;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-label {
+    font-size: 0.85em;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.kpi-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.kpi-change {
+    font-size: 0.85em;
+    margin: 0;
+}
+
+.kpi-change.positive {
+    color: #27ae60;
+}
+
+.kpi-change.negative {
+    color: #e74c3c;
+}
+
+.kpi-change.neutral {
+    color: #95a5a6;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.chart-card,
+.stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card h3,
+.stats-card h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.1em;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 200px;
+    border-radius: 8px;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-placeholder.green {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.chart-placeholder svg {
+    width: 90%;
+    height: 90%;
+}
+
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-warning {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+@@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.8em;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header-modern {
+        flex-direction: column;
+    }
+}
+</style>

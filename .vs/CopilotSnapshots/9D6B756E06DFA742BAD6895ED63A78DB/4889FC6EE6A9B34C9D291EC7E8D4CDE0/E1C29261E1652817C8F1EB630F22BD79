@@ -1,0 +1,44 @@
+﻿@page "/"
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="login-container">
+    <div class="login-card">
+
+        <h2>Clinic System</h2>
+        <p class="subtitle">Sign in to continue</p>
+
+        <input @bind="username" placeholder="Username" class="input" />
+        <input @bind="password" type="password" placeholder="Password" class="input" />
+
+        <button class="login-btn" @onclick="HandleLogin">Login</button>
+
+        <p class="error">@message</p>
+
+    </div>
+</div>
+
+@code {
+    string username;
+    string password;
+    string message;
+
+    void HandleLogin()
+    {
+        var success = Auth.Login(username, password);
+
+        if (!success)
+        {
+            message = "Invalid credentials";
+            return;
+        }
+
+        if (Auth.CurrentRole == "SuperAdmin")
+            Nav.NavigateTo("/superadmin");
+        else if (Auth.CurrentRole == "Admin")
+            Nav.NavigateTo("/admin");
+        else
+            Nav.NavigateTo("/dashboard");
+    }
+}

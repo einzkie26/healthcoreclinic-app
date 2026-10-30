@@ -1,0 +1,40 @@
+﻿<Project>
+  <ItemGroup>
+    <StaticWebAssetEndpoint Include="app.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\app.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-7dNsaipr9RVR\u002BFZintGOa6O7LjosTjdDVVUpY7dRcr4="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"46884"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00227dNsaipr9RVR\u002BFZintGOa6O7LjosTjdDVVUpY7dRcr4=\u0022"},{"Name":"Last-Modified","Value":"Sun, 03 May 2026 16:33:28 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="app.lum1erpw5c.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\app.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"lum1erpw5c"},{"Name":"integrity","Value":"sha256-7dNsaipr9RVR\u002BFZintGOa6O7LjosTjdDVVUpY7dRcr4="},{"Name":"label","Value":"app.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"46884"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00227dNsaipr9RVR\u002BFZintGOa6O7LjosTjdDVVUpY7dRcr4=\u0022"},{"Name":"Last-Modified","Value":"Sun, 03 May 2026 16:33:28 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="healthcoreclinic-app-demo.qlthuwo0im.styles.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\healthcoreclinic-app-demo.styles.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"qlthuwo0im"},{"Name":"integrity","Value":"sha256-4nGKNAUo7Ri7i2lEK7tPsTaDddqSNTHymPEg/k3moms="},{"Name":"label","Value":"healthcoreclinic-app-demo.styles.css"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"54"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00224nGKNAUo7Ri7i2lEK7tPsTaDddqSNTHymPEg/k3moms=\u0022"},{"Name":"Last-Modified","Value":"Sun, 03 May 2026 16:26:05 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="healthcoreclinic-app-demo.styles.css">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\healthcoreclinic-app-demo.styles.css'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-4nGKNAUo7Ri7i2lEK7tPsTaDddqSNTHymPEg/k3moms="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"54"},{"Name":"Content-Type","Value":"text/css"},{"Name":"ETag","Value":"\u00224nGKNAUo7Ri7i2lEK7tPsTaDddqSNTHymPEg/k3moms=\u0022"},{"Name":"Last-Modified","Value":"Sun, 03 May 2026 16:26:05 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="index.heltnn6jle.html">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\index.html'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"fingerprint","Value":"heltnn6jle"},{"Name":"integrity","Value":"sha256-mWS9/WRaz3V6\u002BYhkOeY0DWhyfJMaehLgX5ecPZMRWHA="},{"Name":"label","Value":"index.html"}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Cache-Control","Value":"max-age=31536000, immutable"},{"Name":"Content-Length","Value":"8320"},{"Name":"Content-Type","Value":"text/html"},{"Name":"ETag","Value":"\u0022mWS9/WRaz3V6\u002BYhkOeY0DWhyfJMaehLgX5ecPZMRWHA=\u0022"},{"Name":"Last-Modified","Value":"Sun, 03 May 2026 16:34:09 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+    <StaticWebAssetEndpoint Include="index.html">
+      <AssetFile>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\staticwebassets\index.html'))</AssetFile>
+      <Selectors><![CDATA[[]]]></Selectors>
+      <EndpointProperties><![CDATA[[{"Name":"integrity","Value":"sha256-mWS9/WRaz3V6\u002BYhkOeY0DWhyfJMaehLgX5ecPZMRWHA="}]]]></EndpointProperties>
+      <ResponseHeaders><![CDATA[[{"Name":"Cache-Control","Value":"no-cache"},{"Name":"Content-Length","Value":"8320"},{"Name":"Content-Type","Value":"text/html"},{"Name":"ETag","Value":"\u0022mWS9/WRaz3V6\u002BYhkOeY0DWhyfJMaehLgX5ecPZMRWHA=\u0022"},{"Name":"Last-Modified","Value":"Sun, 03 May 2026 16:34:09 GMT"}]]]></ResponseHeaders>
+    </StaticWebAssetEndpoint>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,524 @@
+@page "/superadmin"
+@layout SuperAdminLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using Microsoft.EntityFrameworkCore
+@inject AuthService Auth
+@inject ClinicDbContext Db
+
+@code {
+    private int TotalClinics;
+    private int ActiveSubscriptions;
+    private int ActivePlanTiers;
+    private decimal RevenueMtd;
+
+    private int TotalUsers;
+    private int TotalDoctors;
+    private int TotalReceptionists;
+    private int TotalPatients;
+    private int ArchivedPatients;
+    private int TotalAppointments;
+    private int TotalMedicalRecords;
+    private int TotalPrescriptions;
+    private int TotalInvoices;
+    private decimal TotalInvoicedAmount;
+    private decimal TotalPaidAmount;
+
+    private List<MonthMetric> SubscriptionTrend = new();
+    private List<PlanSummary> TopPlans = new();
+    private List<AuthService.AdminActivityItem> RecentAdminActivities = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        TotalClinics = await Db.Users
+            .AsNoTracking()
+            .Include(u => u.Role)
+            .CountAsync(u => u.IsActive && u.Role != null && u.Role.RoleName == "Admin");
+
+        ActiveSubscriptions = await Db.Subscriptions
+            .AsNoTracking()
+            .CountAsync(s => s.Status == "Active");
+
+        ActivePlanTiers = await Db.SubscriptionPlans.AsNoTracking().CountAsync();
+
+        var now = DateTime.UtcNow;
+        var monthStart = new DateTime(now.Year, now.Month, 1);
+
+        RevenueMtd = await Db.Subscriptions
+            .AsNoTracking()
+            .Include(s => s.Plan)
+            .Where(s => s.StartDate >= monthStart)
+            .SumAsync(s => s.Plan != null ? s.Plan.Price : 0m);
+
+        TotalUsers = await Db.Users.AsNoTracking().CountAsync();
+        TotalDoctors = await Db.Users.AsNoTracking().Include(u => u.Role).CountAsync(u => u.Role != null && u.Role.RoleName == "Doctor");
+        TotalReceptionists = await Db.Users.AsNoTracking().Include(u => u.Role).CountAsync(u => u.Role != null && u.Role.RoleName == "Receptionist");
+        TotalPatients = await Db.Patients.AsNoTracking().CountAsync();
+        ArchivedPatients = await Db.Patients.AsNoTracking().CountAsync(p => p.IsArchived);
+        TotalAppointments = await Db.Appointments.AsNoTracking().CountAsync();
+        TotalMedicalRecords = await Db.MedicalRecords.AsNoTracking().CountAsync();
+        TotalPrescriptions = await Db.Prescriptions.AsNoTracking().CountAsync();
+        TotalInvoices = await Db.Invoices.AsNoTracking().CountAsync();
+        TotalInvoicedAmount = await Db.Invoices.AsNoTracking().SumAsync(i => i.TotalAmount);
+        TotalPaidAmount = await Db.Payments.AsNoTracking().SumAsync(p => p.AmountPaid);
+
+        SubscriptionTrend = await BuildTrendAsync(monthStart.AddMonths(-5));
+
+        TopPlans = await Db.Subscriptions
+            .AsNoTracking()
+            .Include(s => s.Plan)
+            .Where(s => s.Plan != null)
+            .GroupBy(s => s.Plan!.PlanName)
+            .Select(g => new PlanSummary { PlanName = g.Key, Count = g.Count() })
+            .OrderByDescending(p => p.Count)
+            .Take(4)
+            .ToListAsync();
+
+        RecentAdminActivities = Auth.GetRecentAdminActivities(12);
+    }
+
+    private async Task<List<MonthMetric>> BuildTrendAsync(DateTime startMonth)
+    {
+        var endMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1).AddMonths(1);
+        var subscriptions = await Db.Subscriptions
+            .AsNoTracking()
+            .Include(s => s.Plan)
+            .Where(s => s.StartDate >= startMonth && s.StartDate < endMonth)
+            .ToListAsync();
+
+        var results = new List<MonthMetric>();
+        var cursor = startMonth;
+        while (cursor < endMonth)
+        {
+            var next = cursor.AddMonths(1);
+            var monthSubs = subscriptions.Where(s => s.StartDate >= cursor && s.StartDate < next).ToList();
+            results.Add(new MonthMetric
+            {
+                Label = cursor.ToString("MMM"),
+                Subscriptions = monthSubs.Count,
+                Revenue = monthSubs.Sum(s => s.Plan?.Price ?? 0m)
+            });
+            cursor = next;
+        }
+
+        return results;
+    }
+
+    private string BuildTrendPoints()
+    {
+        if (SubscriptionTrend.Count == 0)
+            return string.Empty;
+
+        const int width = 300;
+        const int height = 140;
+        const int padding = 10;
+        var max = Math.Max(1, SubscriptionTrend.Max(m => m.Subscriptions));
+        var step = SubscriptionTrend.Count == 1 ? 0 : (width - padding * 2) / (double)(SubscriptionTrend.Count - 1);
+
+        return string.Join(" ", SubscriptionTrend.Select((metric, index) =>
+        {
+            var x = padding + step * index;
+            var y = height - padding - (metric.Subscriptions / (double)max) * (height - padding * 2);
+            return $"{x:F0},{y:F0}";
+        }));
+    }
+
+    private sealed class MonthMetric
+    {
+        public string Label { get; set; } = string.Empty;
+        public int Subscriptions { get; set; }
+        public decimal Revenue { get; set; }
+    }
+
+    private sealed class PlanSummary
+    {
+        public string PlanName { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+}
+
+<div class="page-container">
+    <div class="page-header-modern">
+        <div class="header-content">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">System-wide analytics and key metrics</p>
+        </div>
+        <div class="header-date">Last updated: @DateTime.Now.ToString("MMM dd, yyyy HH:mm")</div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #e3f2fd;">U</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Total Clinics (Tenants)</p>
+                <p class="kpi-value">@TotalClinics</p>
+                <p class="kpi-change neutral">Active clinics</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #e8f5e9;">A</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Active Subscriptions</p>
+                <p class="kpi-value">@ActiveSubscriptions</p>
+                <p class="kpi-change neutral">Currently active</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #fff3e0;">P</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Active Plan Tiers</p>
+                <p class="kpi-value">@ActivePlanTiers</p>
+                <p class="kpi-change neutral">Configured tiers</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #f3e5f5;">₱</div>
+            <div class="kpi-content">
+                <p class="kpi-label">Revenue (MTD)</p>
+                <p class="kpi-value">₱@RevenueMtd.ToString("N0")</p>
+                <p class="kpi-change positive">Revenue MTD</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="chart-card">
+            <h3>Subscriptions Trend (Last 6 Months)</h3>
+            <div class="chart-placeholder">
+                <svg viewBox="0 0 300 140">
+                    <polyline points="@BuildTrendPoints()" stroke="#2a5298" stroke-width="2" fill="none" />
+                </svg>
+            </div>
+            <div class="chart-labels">
+                @foreach (var item in SubscriptionTrend)
+                {
+                    <span>@item.Label</span>
+                }
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h3>System Status & Plans</h3>
+            <div class="stats-list">
+                <div class="stat-row">
+                    <span class="stat-label">Server Status</span>
+                    <span class="badge badge-success">Online</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Database</span>
+                    <span class="badge badge-success">Connected</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">API Health</span>
+                    <span class="badge badge-success">Healthy</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Top Plans</span>
+                    <span class="badge badge-info">@string.Join(" | ", TopPlans.Select(p => $"{p.PlanName} ({p.Count})"))</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="analytics-card">
+        <h3>Platform Analytics Overview</h3>
+        <div class="analytics-grid">
+            <div class="stat-row"><span class="stat-label">Total Users</span><span class="badge badge-info">@TotalUsers</span></div>
+            <div class="stat-row"><span class="stat-label">Doctors</span><span class="badge badge-info">@TotalDoctors</span></div>
+            <div class="stat-row"><span class="stat-label">Receptionists</span><span class="badge badge-info">@TotalReceptionists</span></div>
+            <div class="stat-row"><span class="stat-label">Total Patients</span><span class="badge badge-info">@TotalPatients</span></div>
+            <div class="stat-row"><span class="stat-label">Archived Patients</span><span class="badge badge-info">@ArchivedPatients</span></div>
+            <div class="stat-row"><span class="stat-label">Appointments</span><span class="badge badge-info">@TotalAppointments</span></div>
+            <div class="stat-row"><span class="stat-label">Medical Records</span><span class="badge badge-info">@TotalMedicalRecords</span></div>
+            <div class="stat-row"><span class="stat-label">Prescriptions</span><span class="badge badge-info">@TotalPrescriptions</span></div>
+            <div class="stat-row"><span class="stat-label">Invoices</span><span class="badge badge-info">@TotalInvoices</span></div>
+            <div class="stat-row"><span class="stat-label">Total Invoiced</span><span class="badge badge-success">₱@TotalInvoicedAmount.ToString("N0")</span></div>
+            <div class="stat-row"><span class="stat-label">Total Paid</span><span class="badge badge-success">₱@TotalPaidAmount.ToString("N0")</span></div>
+        </div>
+    </div>
+
+    <div class="analytics-card">
+        <h3>Admin Activity Notifications</h3>
+        @if (RecentAdminActivities.Count == 0)
+        {
+            <p class="page-subtitle">No recent admin CRUD activity yet.</p>
+        }
+        else
+        {
+            <div class="stats-list">
+                @foreach (var activity in RecentAdminActivities)
+                {
+                    <div class="stat-row">
+                        <span class="stat-label">@activity.TimestampUtc.ToLocalTime().ToString("MMM dd, yyyy HH:mm") - @activity.AdminName</span>
+                        <span class="badge badge-info">@activity.Action @activity.EntityType</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.header-content h1 {
+    margin: 0 0 8px 0;
+}
+
+.page-title {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.95em;
+    color: #7f8c8d;
+    margin: 0;
+}
+
+.header-date {
+    font-size: 0.9em;
+    color: #95a5a6;
+    font-weight: 600;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    border-left: 4px solid #1e3c72;
+    transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+.kpi-icon {
+    font-size: 2.5em;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-label {
+    font-size: 0.85em;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.kpi-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.kpi-change {
+    font-size: 0.85em;
+    margin: 0;
+}
+
+.kpi-change.positive {
+    color: #27ae60;
+}
+
+.kpi-change.neutral {
+    color: #95a5a6;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.chart-card,
+.stats-card,
+.analytics-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card h3,
+.stats-card h3,
+.analytics-card h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.1em;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.chart-placeholder {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border-radius: 8px;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-placeholder svg {
+    width: 90%;
+    height: 90%;
+}
+
+.chart-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    font-size: 0.85em;
+    color: #6b7280;
+}
+
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    gap: 8px;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+@@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.8em;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header-modern {
+        flex-direction: column;
+    }
+}
+
+[data-theme="dark"] .chart-card,
+[data-theme="dark"] .stats-card,
+[data-theme="dark"] .analytics-card {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .chart-card h3,
+[data-theme="dark"] .stats-card h3,
+[data-theme="dark"] .analytics-card h3,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .kpi-label {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .kpi-value,
+[data-theme="dark"] .page-title {
+    color: #f8fafc;
+}
+
+[data-theme="dark"] .page-subtitle,
+[data-theme="dark"] .header-date,
+[data-theme="dark"] .chart-labels {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .stat-row {
+    background-color: #111827;
+}
+</style>

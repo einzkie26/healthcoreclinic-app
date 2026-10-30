@@ -1,0 +1,415 @@
+@page "/superadmin/access-control"
+@layout SuperAdminLayout
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using Microsoft.EntityFrameworkCore
+@inject ClinicDbContext Db
+
+@code {
+    private List<Role> Roles = new();
+    private List<RolePermission> RolePermissions = new();
+    private bool ShowRoleModal;
+    private bool IsEdit;
+    private int EditingRoleId;
+    private string RoleName = string.Empty;
+    private readonly List<PermissionDefinition> Permissions =
+    [
+        new PermissionDefinition("ManageUsers", "Manage Users"),
+        new PermissionDefinition("ManagePlans", "Manage Plans"),
+        new PermissionDefinition("ManageSubscriptions", "Manage Subscriptions"),
+        new PermissionDefinition("ManageResources", "Manage Resources"),
+        new PermissionDefinition("ViewReports", "View Reports"),
+        new PermissionDefinition("SystemSettings", "System Settings")
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        Roles = await Db.Roles.AsNoTracking().OrderBy(r => r.RoleName).ToListAsync();
+        RolePermissions = await Db.RolePermissions.AsNoTracking().ToListAsync();
+        await EnsureRolePermissionsAsync();
+    }
+
+    private async Task EnsureRolePermissionsAsync()
+    {
+        var updated = false;
+        foreach (var role in Roles)
+        {
+            foreach (var permission in Permissions)
+            {
+                if (!RolePermissions.Any(rp => rp.RoleID == role.RoleID && rp.PermissionKey == permission.Key))
+                {
+                    Db.RolePermissions.Add(new RolePermission
+                    {
+                        RoleID = role.RoleID,
+                        PermissionKey = permission.Key,
+                        IsAllowed = GetDefaultPermission(role.RoleName, permission.Key)
+                    });
+                    updated = true;
+                }
+            }
+        }
+
+        if (updated)
+        {
+            await Db.SaveChangesAsync();
+            RolePermissions = await Db.RolePermissions.AsNoTracking().ToListAsync();
+        }
+    }
+
+    private bool GetDefaultPermission(string roleName, string key)
+    {
+        if (roleName.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (roleName.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return key is "ManageUsers" or "ManageSubscriptions" or "ManageResources" or "ViewReports";
+        }
+
+        if (roleName.Equals("Doctor", StringComparison.OrdinalIgnoreCase))
+        {
+            return key is "ViewReports";
+        }
+
+        return false;
+    }
+
+    private bool IsAllowed(int roleId, string key) =>
+        RolePermissions.Any(rp => rp.RoleID == roleId && rp.PermissionKey == key && rp.IsAllowed);
+
+    private async Task TogglePermissionAsync(int roleId, string key, bool value)
+    {
+        var permission = await Db.RolePermissions.FirstOrDefaultAsync(rp => rp.RoleID == roleId && rp.PermissionKey == key);
+        if (permission == null)
+            return;
+
+        permission.IsAllowed = value;
+        await Db.SaveChangesAsync();
+        await LoadDataAsync();
+    }
+
+    private void OpenRoleModal()
+    {
+        IsEdit = false;
+        EditingRoleId = 0;
+        RoleName = string.Empty;
+        ShowRoleModal = true;
+    }
+
+    private void OpenEditRole(Role role)
+    {
+        IsEdit = true;
+        EditingRoleId = role.RoleID;
+        RoleName = role.RoleName;
+        ShowRoleModal = true;
+    }
+
+    private void CloseRoleModal() => ShowRoleModal = false;
+
+    private async Task SaveRoleAsync()
+    {
+        if (string.IsNullOrWhiteSpace(RoleName))
+            return;
+
+        if (IsEdit)
+        {
+            var role = await Db.Roles.FirstOrDefaultAsync(r => r.RoleID == EditingRoleId);
+            if (role == null)
+                return;
+
+            role.RoleName = RoleName.Trim();
+        }
+        else
+        {
+            Db.Roles.Add(new Role { RoleName = RoleName.Trim() });
+        }
+
+        await Db.SaveChangesAsync();
+        ShowRoleModal = false;
+        await LoadDataAsync();
+    }
+
+    private sealed class PermissionDefinition
+    {
+        public PermissionDefinition(string key, string label)
+        {
+            Key = key;
+            Label = label;
+        }
+
+        public string Key { get; }
+        public string Label { get; }
+    }
+}
+
+<div class="page-header">
+    <h1>Access Control</h1>
+    <button class="btn-small btn-edit" @onclick="OpenRoleModal">+ Add Role</button>
+</div>
+
+<div class="access-control-container">
+    <div class="section">
+        <h2>Role Management</h2>
+        <div class="roles-grid">
+            @foreach (var role in Roles)
+            {
+                <div class="role-card">
+                    <h3>@role.RoleName</h3>
+                    <p class="permissions-count">@Permissions.Count(p => IsAllowed(role.RoleID, p.Key)) Permissions</p>
+                    <div class="permissions-list">
+                        @foreach (var permission in Permissions)
+                        {
+                            <p>
+                                <span class="ui-icon @(IsAllowed(role.RoleID, permission.Key) ? "ui-icon-check" : "ui-icon-close")" aria-hidden="true"></span>
+                                @permission.Label
+                            </p>
+                        }
+                    </div>
+                    <button class="btn-small btn-edit" @onclick="() => OpenEditRole(role)">Edit</button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>System Permissions</h2>
+        <div class="card">
+            <table class="permissions-table">
+                <thead>
+                    <tr>
+                        <th>Permission</th>
+                        @foreach (var role in Roles)
+                        {
+                            <th>@role.RoleName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var permission in Permissions)
+                    {
+                        <tr>
+                            <td>@permission.Label</td>
+                            @foreach (var role in Roles)
+                            {
+                                <td>
+                                    <input type="checkbox"
+                                           checked="@IsAllowed(role.RoleID, permission.Key)"
+                                           @onchange="e => TogglePermissionAsync(role.RoleID, permission.Key, (bool)e.Value!)" />
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (ShowRoleModal)
+{
+    <div class="modal-overlay" @onclick="CloseRoleModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>@(IsEdit ? "Update Role" : "Add Role")</h2>
+                <button class="modal-close" @onclick="CloseRoleModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Role Name</label>
+                    <input type="text" @bind="RoleName" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-small btn-edit" @onclick="SaveRoleAsync">Save</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1e3c72;
+}
+
+.access-control-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.section h2 {
+    color: #1e3c72;
+    margin: 0;
+}
+
+.roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.role-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.role-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.role-card h3 {
+    margin: 0 0 10px 0;
+    color: #1e3c72;
+}
+
+.permissions-count {
+    color: #2a5298;
+    font-weight: 600;
+    margin: 5px 0 15px 0;
+    font-size: 0.9em;
+}
+
+.permissions-list {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.permissions-list p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.btn-small {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    margin-top: 10px;
+}
+
+.btn-edit {
+    background-color: #4caf50;
+    color: white;
+    width: 100%;
+}
+
+.btn-edit:hover {
+    background-color: #45a049;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.permissions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.permissions-table thead {
+    background-color: #f5f5f5;
+}
+
+.permissions-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.permissions-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+}
+
+.permissions-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.modal-content {
+    background: white;
+    width: 92%;
+    max-width: 520px;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header,
+.modal-footer {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+    padding: 16px 20px;
+}
+
+.modal-close {
+    border: none;
+    background: transparent;
+    font-size: 1.4em;
+    cursor: pointer;
+}
+
+.form-group {
+    display: grid;
+    gap: 6px;
+}
+
+.form-group input {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+</style>

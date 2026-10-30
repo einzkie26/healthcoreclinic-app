@@ -1,0 +1,1428 @@
+@page "/admin/patients"
+@layout AdminLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Models
+@inject AuthService Auth
+
+<div class="patients-container">
+    <div class="page-header">
+        <div>
+            <h1>Patient Management</h1>
+            <p>Create and manage patient records in the system</p>
+        </div>
+        <button class="btn btn-primary" @onclick="OpenCreatePatientModal" disabled="@isLoading" style="display: @(showArchived ? "none" : "flex")">
+            <span class="icon ui-icon ui-icon-plus" aria-hidden="true"></span>
+            <span>New Patient</span>
+        </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-section">
+        <button class="tab-btn @(showArchived ? "" : "active")" @onclick="SwitchToActive">
+            Active Patients
+            @if (patients != null && patients.Count > 0)
+            {
+                <span class="badge">@patients.Count</span>
+            }
+        </button>
+        <button class="tab-btn @(showArchived ? "active" : "")" @onclick="SwitchToArchived">
+            Archived Patients
+            @if (archivedPatients != null && archivedPatients.Count > 0)
+            {
+                <span class="badge">@archivedPatients.Count</span>
+            }
+        </button>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="search-filter-bar">
+        <div class="search-box">
+            <span class="search-icon"><span class="ui-icon ui-icon-search" aria-hidden="true"></span></span>
+            <input placeholder="Search by name..." value="@searchTerm" @oninput="OnSearchChanged" />
+            @if (!string.IsNullOrEmpty(searchTerm))
+            {
+                <button class="clear-search" @onclick="ClearSearch" aria-label="Clear search">
+                    <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                </button>
+            }
+        </div>
+        <select class="filter-select" @onchange="OnFilterChanged">
+            <option value="">All Genders</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+        </select>
+        <span class="results-count">@FilteredList.Count result@(FilteredList.Count != 1 ? "s" : "")</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(messageText))
+    {
+        <div class="status-message @(isSuccess ? "success" : "error")">
+            <span class="msg-icon">
+                <span class="ui-icon @(isSuccess ? "ui-icon-check" : "ui-icon-alert")" aria-hidden="true"></span>
+            </span>
+            <span>@messageText</span>
+            <button class="msg-close" @onclick="() => messageText = null" aria-label="Dismiss message">
+                <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+            </button>
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading patients...</p>
+        </div>
+    }
+    else if (!showArchived && (patients == null || patients.Count == 0))
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><span class="ui-icon ui-icon-users" aria-hidden="true"></span></div>
+            <h3>No Active Patients</h3>
+            <p>Start by creating your first patient record</p>
+            <button class="btn btn-primary" @onclick="OpenCreatePatientModal">
+                Create First Patient
+            </button>
+        </div>
+    }
+    else if (showArchived && (archivedPatients == null || archivedPatients.Count == 0))
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><span class="ui-icon ui-icon-box" aria-hidden="true"></span></div>
+            <h3>No Archived Patients</h3>
+            <p>Archived patient records will appear here</p>
+        </div>
+    }
+    else if (FilteredList.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><span class="ui-icon ui-icon-search" aria-hidden="true"></span></div>
+            <h3>No Results Found</h3>
+            <p>Try adjusting your search or filter</p>
+        </div>
+    }
+    else
+    {
+        <div class="patients-grid">
+            <div class="table-responsive">
+                <table class="patients-table">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Birth Date</th>
+                            <th>Gender</th>
+                            <th>Contact</th>
+                            <th>Address</th>
+                            <th>@(showArchived ? "Archived" : "Created")</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var patient in FilteredList)
+                        {
+                            @if (!showArchived)
+                            {
+                                <tr class="patient-row" @onclick="() => OpenPatientDetails(patient)" style="cursor: pointer;">
+                                    <td class="font-weight-bold">@patient.FullName</td>
+                                    <td>@(patient.BirthDate.HasValue ? patient.BirthDate?.ToString("MMM dd, yyyy") : "Not provided")</td>
+                                    <td>@(string.IsNullOrEmpty(patient.Gender) ? "-" : patient.Gender)</td>
+                                    <td>@(string.IsNullOrEmpty(patient.ContactNumber) ? "-" : patient.ContactNumber)</td>
+                                    <td>@(string.IsNullOrEmpty(patient.Address) ? "-" : patient.Address)</td>
+                                    <td>@patient.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                    <td class="actions-col" @onclick:stopPropagation>
+                                        <button class="action-btn edit" @onclick="() => OpenEditPatientModal(patient)" title="Edit" aria-label="Edit"><span class="ui-icon ui-icon-edit" aria-hidden="true"></span></button>
+                                        <button class="action-btn delete" @onclick="() => ConfirmArchivePatient(patient)" title="Archive" aria-label="Archive"><span class="ui-icon ui-icon-trash" aria-hidden="true"></span></button>
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                <tr class="patient-row archived-row" @onclick="() => OpenPatientDetails(patient)" style="cursor: pointer;">
+                                    <td class="font-weight-bold">@patient.FullName</td>
+                                    <td>@(patient.BirthDate.HasValue ? patient.BirthDate?.ToString("MMM dd, yyyy") : "Not provided")</td>
+                                    <td>@(string.IsNullOrEmpty(patient.Gender) ? "-" : patient.Gender)</td>
+                                    <td>@(string.IsNullOrEmpty(patient.ContactNumber) ? "-" : patient.ContactNumber)</td>
+                                    <td>@(string.IsNullOrEmpty(patient.Address) ? "-" : patient.Address)</td>
+                                    <td>@patient.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                    <td class="actions-col" @onclick:stopPropagation>
+                                        <button class="action-btn restore" @onclick="() => ConfirmRestorePatient(patient)" title="Restore" aria-label="Restore"><span class="ui-icon ui-icon-restore" aria-hidden="true"></span></button>
+                                        <button class="action-btn delete" @onclick="() => ConfirmPermanentDeletePatient(patient)" title="Delete Permanently" aria-label="Delete Permanently" style="color: #dc2626;"><span class="ui-icon ui-icon-trash" aria-hidden="true"></span></button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+        </div>
+    }
+
+    <!-- Create/Edit Modal -->
+    @if (showPatientModal)
+    {
+        <div class="modal-overlay" @onclick="ClosePatientModal">
+            <div class="modal-content" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>@(editingPatient != null ? "Edit Patient" : "Create New Patient")</h2>
+                    <button class="close-btn" @onclick="ClosePatientModal" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    @if (!string.IsNullOrWhiteSpace(modalMessage))
+                    {
+                        <div class="status-message @(modalSuccess ? "success" : "error")">
+                            <span class="msg-icon">
+                                <span class="ui-icon @(modalSuccess ? "ui-icon-check" : "ui-icon-alert")" aria-hidden="true"></span>
+                            </span>
+                            <span>@modalMessage</span>
+                        </div>
+                    }
+
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input @bind="formData.FullName" 
+                               @bind:event="oninput"
+                               placeholder="Enter patient full name" 
+                               disabled="@isSubmitting" />
+                        @if (!string.IsNullOrEmpty(errors["name"]))
+                        {
+                            <span class="error-text">@errors["name"]</span>
+                        }
+                    </div>
+
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label>Birth Date</label>
+                            <input @bind:value="formData.BirthDateStr" 
+                                   @bind:value:event="onchange"
+                                   type="date" 
+                                   disabled="@isSubmitting" />
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select @bind="formData.Gender" disabled="@isSubmitting">
+                                <option value="">-- Select Gender --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contact Number</label>
+                        <input @bind="formData.ContactNumber" 
+                               placeholder="e.g., 09123456789" 
+                               disabled="@isSubmitting" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea @bind="formData.Address" 
+                                  placeholder="Enter patient address" 
+                                  disabled="@isSubmitting"
+                                  rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="ClosePatientModal" disabled="@isSubmitting">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" @onclick="SavePatient" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="loader"></span>
+                            <span>Saving...</span>
+                        }
+                        else
+                        {
+                            <span>@(editingPatient != null ? "Update Patient" : "Create Patient")</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Patient Details Modal -->
+    @if (showPatientDetails && editingPatient != null)
+    {
+        <div class="modal-overlay" @onclick="ClosePatientDetails">
+            <div class="modal-content details-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Patient Details</h2>
+                    <button class="close-btn" @onclick="ClosePatientDetails">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Full Name</label>
+                            <p>@editingPatient.FullName</p>
+                        </div>
+                        <div class="detail-item">
+                            <label>Birth Date</label>
+                            <p>@(editingPatient.BirthDate.HasValue ? editingPatient.BirthDate?.ToString("MMMM dd, yyyy") : "Not provided")</p>
+                        </div>
+                        <div class="detail-item">
+                            <label>Gender</label>
+                            <p>@(string.IsNullOrEmpty(editingPatient.Gender) ? "-" : editingPatient.Gender)</p>
+                        </div>
+                        <div class="detail-item">
+                            <label>Contact Number</label>
+                            <p>@(string.IsNullOrEmpty(editingPatient.ContactNumber) ? "-" : editingPatient.ContactNumber)</p>
+                        </div>
+                        <div class="detail-item full-width">
+                            <label>Address</label>
+                            <p>@(string.IsNullOrEmpty(editingPatient.Address) ? "-" : editingPatient.Address)</p>
+                        </div>
+                        <div class="detail-item">
+                            <label>Patient ID</label>
+                            <p class="text-muted">#@editingPatient.PatientID</p>
+                        </div>
+                        <div class="detail-item">
+                            <label>Registered</label>
+                            <p class="text-muted">@editingPatient.CreatedAt.ToString("MMM dd, yyyy - HH:mm")</p>
+                        </div>
+                        <div class="detail-item">
+                            <label>Status</label>
+                            <p>@(editingPatient.IsArchived ? "Archived" : "Active")</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="ClosePatientDetails">Close</button>
+                    @if (!editingPatient.IsArchived)
+                    {
+                        <button class="btn btn-primary" @onclick="() => { ClosePatientDetails(); OpenEditPatientModal(editingPatient); }">Edit Patient</button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Confirm Archive Modal -->
+    @if (showConfirmArchive)
+    {
+        <div class="modal-overlay" @onclick="() => showConfirmArchive = false">
+            <div class="modal-content confirm-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Archive Patient</h2>
+                    <button class="close-btn" @onclick="() => showConfirmArchive = false" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to archive <strong>@patientToArchive?.FullName</strong>? This patient record will be hidden from the list.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => showConfirmArchive = false" disabled="@isSubmitting">
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger" @onclick="ArchivePatient" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="loader"></span>
+                            <span>Archiving...</span>
+                        }
+                        else
+                        {
+                            <span>Archive Patient</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Confirm Restore Modal -->
+    @if (showConfirmRestore)
+    {
+        <div class="modal-overlay" @onclick="() => showConfirmRestore = false">
+            <div class="modal-content confirm-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Restore Patient</h2>
+                    <button class="close-btn" @onclick="() => showConfirmRestore = false" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Restore <strong>@patientToRestore?.FullName</strong> back to active patients?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => showConfirmRestore = false" disabled="@isSubmitting">Cancel</button>
+                    <button class="btn btn-primary" @onclick="RestorePatient" disabled="@isSubmitting">
+                        @if (isSubmitting) { <span class="loader"></span><span>Restoring...</span> } else { <span>Restore Patient</span> }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Confirm Permanent Delete Modal -->
+    @if (showConfirmDelete)
+    {
+        <div class="modal-overlay" @onclick="() => showConfirmDelete = false">
+            <div class="modal-content confirm-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Delete Permanently</h2>
+                    <button class="close-btn" @onclick="() => showConfirmDelete = false" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Permanently delete <strong>@patientToDelete?.FullName</strong>? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => showConfirmDelete = false" disabled="@isSubmitting">Cancel</button>
+                    <button class="btn btn-danger" @onclick="PermanentlyDeletePatient" disabled="@isSubmitting">
+                        @if (isSubmitting) { <span class="loader"></span><span>Deleting...</span> } else { <span>Delete Permanently</span> }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Patient>? patients;
+    private List<Patient>? archivedPatients;
+    private Patient? editingPatient;
+    private Patient? patientToArchive;
+    private Patient? patientToRestore;
+    private Patient? patientToDelete;
+    private bool showPatientModal;
+    private bool showConfirmArchive;
+    private bool showConfirmRestore;
+    private bool showConfirmDelete;
+    private bool showPatientDetails;
+    private bool showArchived;
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string? messageText;
+    private bool isSuccess;
+    private string? modalMessage;
+    private bool modalSuccess;
+    private Dictionary<string, string> errors = new() { ["name"] = string.Empty };
+
+    // Search, filter
+    private string searchTerm = string.Empty;
+    private string genderFilter = string.Empty;
+
+    private List<Patient> FilteredList
+    {
+        get
+        {
+            var source = showArchived ? archivedPatients : patients;
+            if (source == null) return new();
+            return source
+                .Where(p => (string.IsNullOrEmpty(searchTerm) || p.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                         && (string.IsNullOrEmpty(genderFilter) || p.Gender == genderFilter))
+                .ToList();
+        }
+    }
+
+    private class FormData
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string? BirthDateStr { get; set; }
+        public string? Gender { get; set; }
+        public string? ContactNumber { get; set; }
+        public string? Address { get; set; }
+
+        public DateTime? GetBirthDate()
+        {
+            if (string.IsNullOrEmpty(BirthDateStr))
+                return null;
+            if (DateTime.TryParse(BirthDateStr, out var date))
+                return date;
+            return null;
+        }
+    }
+
+    private FormData formData = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPatients();
+    }
+
+    private async Task LoadPatients()
+    {
+        isLoading = true;
+        patients = await Auth.GetAllPatientsAsync();
+        isLoading = false;
+    }
+
+    private async Task SwitchToActive() { showArchived = false; await LoadPatients(); }
+    private async Task SwitchToArchived() { showArchived = true; await LoadArchivedPatients(); }
+    private void OnSearchChanged(ChangeEventArgs e) { searchTerm = e.Value?.ToString() ?? string.Empty; }
+    private void OnFilterChanged(ChangeEventArgs e) { genderFilter = e.Value?.ToString() ?? string.Empty; }
+    private void ClearSearch() { searchTerm = string.Empty; }
+
+    private void OpenCreatePatientModal()
+    {
+        editingPatient = null;
+        formData = new FormData();
+        errors["name"] = string.Empty;
+        modalMessage = null;
+        showPatientModal = true;
+    }
+
+    private void OpenEditPatientModal(Patient patient)
+    {
+        editingPatient = patient;
+        formData = new FormData
+        {
+            FullName = patient.FullName,
+            BirthDateStr = patient.BirthDate?.ToString("yyyy-MM-dd"),
+            Gender = patient.Gender,
+            ContactNumber = patient.ContactNumber,
+            Address = patient.Address
+        };
+        errors["name"] = string.Empty;
+        modalMessage = null;
+        showPatientModal = true;
+    }
+
+    private void ClosePatientModal()
+    {
+        showPatientModal = false;
+        editingPatient = null;
+        formData = new FormData();
+        errors["name"] = string.Empty;
+    }
+
+    private bool ValidateForm()
+    {
+        errors["name"] = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(formData.FullName))
+            errors["name"] = "Patient name is required.";
+        else if (formData.FullName.Length < 3)
+            errors["name"] = "Patient name must be at least 3 characters.";
+
+        return string.IsNullOrEmpty(errors["name"]);
+    }
+
+    private async Task SavePatient()
+    {
+        if (!ValidateForm())
+        {
+            modalSuccess = false;
+            modalMessage = "Please fix the errors above.";
+            return;
+        }
+
+        isSubmitting = true;
+        modalMessage = null;
+
+        try
+        {
+            await Task.Delay(400);
+
+            if (editingPatient != null)
+            {
+                var result = await Auth.UpdatePatientAsync(
+                    editingPatient.PatientID,
+                    formData.FullName ?? string.Empty,
+                    formData.GetBirthDate(),
+                    formData.Gender,
+                    formData.ContactNumber,
+                    formData.Address);
+
+                modalSuccess = result.Success;
+                modalMessage = result.Message;
+
+                if (result.Success)
+                {
+                    await Task.Delay(800);
+                    ClosePatientModal();
+                    messageText = result.Message;
+                    isSuccess = true;
+                    await LoadPatients();
+                }
+            }
+            else
+            {
+                var result = await Auth.CreatePatientAsync(
+                    formData.FullName ?? string.Empty,
+                    formData.GetBirthDate(),
+                    formData.Gender,
+                    formData.ContactNumber,
+                    formData.Address);
+
+                modalSuccess = result.Success;
+                modalMessage = result.Message;
+
+                if (result.Success)
+                {
+                    await Task.Delay(800);
+                    ClosePatientModal();
+                    messageText = result.Message;
+                    isSuccess = true;
+                    await LoadPatients();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            modalSuccess = false;
+            modalMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void ConfirmArchivePatient(Patient patient)
+    {
+        patientToArchive = patient;
+        showConfirmArchive = true;
+    }
+
+    private async Task ArchivePatient()
+    {
+        if (patientToArchive == null)
+            return;
+
+        isSubmitting = true;
+
+        try
+        {
+            await Task.Delay(400);
+            var result = await Auth.ArchivePatientAsync(patientToArchive.PatientID);
+
+            messageText = result.Message;
+            isSuccess = result.Success;
+
+            if (result.Success)
+            {
+                await Task.Delay(600);
+                showConfirmArchive = false;
+                patientToArchive = null;
+                await LoadPatients();
+            }
+        }
+        catch (Exception ex)
+        {
+            messageText = $"Error: {ex.Message}";
+            isSuccess = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task LoadArchivedPatients()
+    {
+        isLoading = true;
+        archivedPatients = await Auth.GetArchivedPatientsAsync();
+        isLoading = false;
+    }
+
+    private void OpenPatientDetails(Patient patient)
+    {
+        editingPatient = patient;
+        showPatientDetails = true;
+    }
+
+    private void ClosePatientDetails()
+    {
+        showPatientDetails = false;
+        editingPatient = null;
+    }
+
+    private void ConfirmRestorePatient(Patient patient)
+    {
+        patientToRestore = patient;
+        showConfirmRestore = true;
+    }
+
+    private async Task RestorePatient()
+    {
+        if (patientToRestore == null)
+            return;
+
+        isSubmitting = true;
+
+        try
+        {
+            await Task.Delay(400);
+            var result = await Auth.RestorePatientAsync(patientToRestore.PatientID);
+
+            messageText = result.Message;
+            isSuccess = result.Success;
+
+            if (result.Success)
+            {
+                await Task.Delay(600);
+                showConfirmRestore = false;
+                patientToRestore = null;
+                await LoadArchivedPatients();
+                await LoadPatients();
+            }
+        }
+        catch (Exception ex)
+        {
+            messageText = $"Error: {ex.Message}";
+            isSuccess = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void ConfirmPermanentDeletePatient(Patient patient)
+    {
+        patientToDelete = patient;
+        showConfirmDelete = true;
+    }
+
+    private async Task PermanentlyDeletePatient()
+    {
+        if (patientToDelete == null)
+            return;
+
+        isSubmitting = true;
+
+        try
+        {
+            await Task.Delay(400);
+            var result = await Auth.DeletePatientAsync(patientToDelete.PatientID);
+
+            messageText = result.Message;
+            isSuccess = result.Success;
+
+            if (result.Success)
+            {
+                await Task.Delay(600);
+                showConfirmDelete = false;
+                patientToDelete = null;
+                await LoadArchivedPatients();
+            }
+        }
+        catch (Exception ex)
+        {
+            messageText = $"Error: {ex.Message}";
+            isSuccess = false;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}
+
+<style>
+.patients-container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    gap: 16px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.page-header p {
+    margin: 4px 0 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+    color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #1f2937;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #d1d5db;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.icon {
+    font-size: 16px;
+}
+
+.status-message {
+    padding: 12px 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    animation: slideIn 0.3s ease;
+}
+
+@@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-message.success {
+    background: #ecfdf5;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.status-message.error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.msg-icon {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.msg-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    color: inherit;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.msg-close:hover {
+    opacity: 1;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.empty-state h3 {
+    margin: 0 0 8px 0;
+    color: #1f2937;
+    font-size: 18px;
+}
+
+.empty-state p {
+    margin: 0 0 20px 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.patients-grid {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.patients-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.patients-table thead {
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.patients-table th {
+    padding: 12px 14px;
+    text-align: left;
+    color: #374151;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.patients-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1f2937;
+}
+
+.patients-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.font-weight-bold {
+    font-weight: 600;
+}
+
+.actions-col {
+    text-align: center;
+    width: 100px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.action-btn:hover {
+    background: #e5e7eb;
+}
+
+.action-btn.edit:hover {
+    color: #4f46e5;
+}
+
+.action-btn.delete:hover {
+    color: #dc2626;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+}
+
+@@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content.confirm-modal {
+    max-width: 400px;
+}
+
+.modal-content.details-modal {
+    max-width: 600px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-item label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-item p {
+    margin: 0;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.text-muted { color: #9ca3af; }
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 18px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body p {
+    margin: 0;
+    color: #1f2937;
+    line-height: 1.6;
+}
+
+.form-group {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.form-row.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.form-group label {
+    font-size: 12px;
+    color: #374151;
+    font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.error-text {
+    display: block;
+    color: #dc2626;
+    font-size: 11px;
+    margin-top: -2px;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.loader {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@@media (max-width: 768px) {
+    .patients-container {
+        padding: 16px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+
+    .page-header .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .modal-content {
+        max-width: 95%;
+        width: 95%;
+    }
+
+    .form-row.two-col {
+        grid-template-columns: 1fr;
+    }
+
+    .patients-table {
+        font-size: 12px;
+    }
+
+    .patients-table th,
+    .patients-table td {
+        padding: 10px 8px;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+[data-theme="dark"] .patients-container {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .page-header h1 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .page-header p {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .patients-grid {
+    background: #1f2937;
+}
+
+[data-theme="dark"] .patients-table thead {
+    background: #111827;
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .patients-table th {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .patients-table td {
+    color: #e5e7eb;
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .patients-table tbody tr:hover {
+    background: #111827;
+}
+
+[data-theme="dark"] .modal-content {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .modal-header {
+    border-bottom-color: #374151;
+}
+
+[data-theme="dark"] .modal-header h2 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .modal-body p {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+    background: #111827;
+    color: #f3f4f6;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus,
+[data-theme="dark"] .form-group textarea:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+}
+
+[data-theme="dark"] .modal-footer {
+    border-top-color: #374151;
+    background: #111827;
+}
+
+[data-theme="dark"] .empty-state {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .empty-state h3 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .empty-state p {
+    color: #9ca3af;
+}
+
+.search-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 8px 32px 8px 32px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+}
+
+.clear-search {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0;
+    line-height: 1;
+}
+
+.clear-search:hover { color: #374151; }
+
+.filter-select {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #4f46e5;
+}
+
+.results-count {
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    min-width: 32px;
+    height: 32px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    color: #374151;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0 8px;
+}
+
+.page-btn:hover:not(:disabled) { background: #f3f4f6; border-color: #4f46e5; color: #4f46e5; }
+.page-btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.page-info {
+    font-size: 12px;
+    color: #6b7280;
+    margin-left: 8px;
+}
+
+[data-theme="dark"] .search-box input,
+[data-theme="dark"] .filter-select {
+    background: #111827;
+    color: #f3f4f6;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .page-btn {
+    background: #1f2937;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .page-btn.active { background: #4f46e5; color: #fff; }
+[data-theme="dark"] .pagination { border-top-color: #374151; }
+</style>

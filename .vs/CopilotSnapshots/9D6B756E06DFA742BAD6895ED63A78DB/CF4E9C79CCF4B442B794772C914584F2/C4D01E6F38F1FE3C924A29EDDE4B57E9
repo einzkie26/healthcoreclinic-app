@@ -1,0 +1,95 @@
+﻿@page "/superadmin"
+@layout SuperAdminLayout
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+
+<div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <p class="subtitle">Welcome back, SuperAdmin!</p>
+</div>
+
+<div class="dashboard-grid">
+    <div class="dashboard-card">
+        <h3>Total Users</h3>
+        <p class="card-value">1,234</p>
+        <p class="card-subtitle">Active users</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Active Subscriptions</h3>
+        <p class="card-value">856</p>
+        <p class="card-subtitle">This month</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Total Plans</h3>
+        <p class="card-value">12</p>
+        <p class="card-subtitle">Available plans</p>
+    </div>
+
+    <div class="dashboard-card">
+        <h3>Revenue</h3>
+        <p class="card-value">$45,320</p>
+        <p class="card-subtitle">This month</p>
+    </div>
+</div>
+
+<style>
+.dashboard-header {
+    margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    color: #1e3c72;
+    font-size: 2em;
+}
+
+.subtitle {
+    color: #666;
+    margin: 5px 0 0 0;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.dashboard-card h3 {
+    margin: 10px 0;
+    color: #333;
+}
+
+.card-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #1e3c72;
+    margin: 10px 0;
+}
+
+.card-subtitle {
+    color: #999;
+    font-size: 0.9em;
+    margin: 5px 0 0 0;
+}
+</style>

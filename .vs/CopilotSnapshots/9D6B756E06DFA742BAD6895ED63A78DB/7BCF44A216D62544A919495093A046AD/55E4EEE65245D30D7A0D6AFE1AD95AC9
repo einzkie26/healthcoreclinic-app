@@ -1,0 +1,491 @@
+﻿@page "/doctor/medical-records"
+@layout DoctorLayout
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+
+@code {
+    private bool ShowModal = false;
+    private string CurrentRecordType = "";
+
+    private void ShowCreateForm(string recordType)
+    {
+        CurrentRecordType = recordType;
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        CurrentRecordType = "";
+    }
+
+    private void SaveRecord()
+    {
+        CloseModal();
+    }
+}
+
+<div class="page-header">
+    <h1>Medical Records</h1>
+    <div class="header-buttons">
+        <button class="btn btn-primary" @onclick="() => ShowCreateForm(\"Diagnosis\")">Create Diagnosis</button>
+        <button class="btn btn-primary" @onclick="() => ShowCreateForm(\"Treatment\")">Create Treatment</button>
+        <button class="btn btn-primary" @onclick="() => ShowCreateForm(\"Test Results\")">Create Test Results</button>
+    </div>
+</div>
+
+@if (ShowModal)
+{
+    <div class="modal-overlay" @onclick="CloseModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Create @CurrentRecordType Record</h2>
+                <button class="modal-close" @onclick="CloseModal">X</button>
+            </div>
+            <div class="modal-body">
+                @if (CurrentRecordType == "Diagnosis")
+                {
+                    <div class="form-group">
+                        <label>Patient Name</label>
+                        <input type="text" placeholder="Enter patient name" />
+                    </div>
+                    <div class="form-group">
+                        <label>Diagnosis Code (ICD-10)</label>
+                        <input type="text" placeholder="e.g., I10 for Hypertension" />
+                    </div>
+                    <div class="form-group">
+                        <label>Diagnosis Description</label>
+                        <textarea placeholder="Detailed diagnosis description" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Severity</label>
+                        <select>
+                            <option>Select severity level</option>
+                            <option>Mild</option>
+                            <option>Moderate</option>
+                            <option>Severe</option>
+                            <option>Critical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date Confirmed</label>
+                        <input type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select>
+                            <option>Confirmed</option>
+                            <option>Suspected</option>
+                            <option>Ruled Out</option>
+                        </select>
+                    </div>
+                }
+                else if (CurrentRecordType == "Treatment")
+                {
+                    <div class="form-group">
+                        <label>Patient Name</label>
+                        <input type="text" placeholder="Enter patient name" />
+                    </div>
+                    <div class="form-group">
+                        <label>Treatment Type</label>
+                        <select>
+                            <option>Select treatment type</option>
+                            <option>Medication</option>
+                            <option>Physical Therapy</option>
+                            <option>Surgery</option>
+                            <option>Counseling</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Treatment Description</label>
+                        <textarea placeholder="Detailed treatment plan" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label>Expected End Date</label>
+                        <input type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                            <option>On Hold</option>
+                        </select>
+                    </div>
+                }
+                else if (CurrentRecordType == "Test Results")
+                {
+                    <div class="form-group">
+                        <label>Patient Name</label>
+                        <input type="text" placeholder="Enter patient name" />
+                    </div>
+                    <div class="form-group">
+                        <label>Test Type</label>
+                        <select>
+                            <option>Select test type</option>
+                            <option>Blood Work</option>
+                            <option>X-Ray</option>
+                            <option>CT Scan</option>
+                            <option>MRI</option>
+                            <option>Ultrasound</option>
+                            <option>ECG</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Test Results</label>
+                        <textarea placeholder="Test findings and results" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Test Date</label>
+                        <input type="date" />
+                    </div>
+                    <div class="form-group">
+                        <label>Reference Range</label>
+                        <input type="text" placeholder="Normal range values" />
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select>
+                            <option>Reviewed</option>
+                            <option>Pending Review</option>
+                            <option>Normal</option>
+                            <option>Abnormal</option>
+                        </select>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveRecord">Save Record</button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="filters">
+    <input type="text" class="filter-input" placeholder="Search by patient name" />
+    <select class="filter-select">
+        <option>All Types</option>
+        <option>Diagnosis</option>
+        <option>Treatment</option>
+        <option>Test Results</option>
+    </select>
+    <button class="btn btn-secondary">Search</button>
+</div>
+
+<div class="card">
+    <table class="records-table">
+        <thead>
+            <tr>
+                <th>Record ID</th>
+                <th>Patient</th>
+                <th>Type</th>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>REC001</td>
+                <td>John Doe</td>
+                <td>Diagnosis</td>
+                <td>2024-01-10</td>
+                <td>Hypertension - Stage 1</td>
+                <td><span class="badge badge-success">Confirmed</span></td>
+                <td>
+                    <button class="btn-small btn-view">View</button>
+                    <button class="btn-small btn-edit">Edit</button>
+                </td>
+            </tr>
+            <tr>
+                <td>REC002</td>
+                <td>Jane Smith</td>
+                <td>Test Results</td>
+                <td>2024-01-12</td>
+                <td>Blood Work - Normal</td>
+                <td><span class="badge badge-success">Reviewed</span></td>
+                <td>
+                    <button class="btn-small btn-view">View</button>
+                    <button class="btn-small btn-edit">Edit</button>
+                </td>
+            </tr>
+            <tr>
+                <td>REC003</td>
+                <td>Michael Brown</td>
+                <td>Treatment</td>
+                <td>2024-01-15</td>
+                <td>Physical Therapy - Week 3</td>
+                <td><span class="badge badge-info">In Progress</span></td>
+                <td>
+                    <button class="btn-small btn-view">View</button>
+                    <button class="btn-small btn-edit">Edit</button>
+                </td>
+            </tr>
+            <tr>
+                <td>REC004</td>
+                <td>Sarah Taylor</td>
+                <td>Diagnosis</td>
+                <td>2024-01-08</td>
+                <td>Migraine - Chronic</td>
+                <td><span class="badge badge-success">Confirmed</span></td>
+                <td>
+                    <button class="btn-small btn-view">View</button>
+                    <button class="btn-small btn-edit">Edit</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #11998e;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #11998e;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0d7a6f;
+}
+
+.btn-secondary {
+    background-color: #666;
+    color: white;
+    padding: 8px 15px;
+    font-size: 0.9em;
+}
+
+.btn-secondary:hover {
+    background-color: #555;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-select,
+.filter-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+    flex: 1;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: #11998e;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.records-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.records-table thead {
+    background-color: #f5f5f5;
+}
+
+.records-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.records-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.records-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.badge-info {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+.btn-view {
+    background-color: #2196f3;
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #0b7dda;
+}
+
+.btn-edit {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #45a049;
+}
+
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #11998e;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95em;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #11998e;
+    box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+</style>

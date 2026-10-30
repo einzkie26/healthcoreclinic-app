@@ -1,0 +1,169 @@
+@page "/register"
+
+<div class="register-container">
+    <div class="register-wrapper">
+        <div class="register-card">
+            <div class="register-header">
+                <h1>Admin Registration</h1>
+                <p>Create your Account and Select a Subscription Plan</p>
+            </div>
+
+            <div class="register-form">
+                @if (!string.IsNullOrWhiteSpace(message))
+                {
+                    <div class="status-message @(isSuccess ? "success" : "error")">
+                        <span class="msg-icon">
+                            <span class="ui-icon @(isSuccess ? "ui-icon-check" : "ui-icon-alert")" aria-hidden="true"></span>
+                        </span>
+                        <span>@message</span>
+                        <button class="msg-close" @onclick="() => message = null" aria-label="Dismiss message">
+                            <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                }
+
+                <!-- Admin User Form -->
+                <div class="form-section">
+                    <h3 class="section-title">Admin User Information</h3>
+
+                    <div class="form-row">
+                        <label>Clinic Name *</label>
+                        <input @bind="clinicName" 
+                               @bind:event="oninput"
+                               placeholder="Enter clinic name" 
+                               disabled="@isLoading" />
+                        @if (!string.IsNullOrEmpty(clinicError))
+                        {
+                            <span class="error-text">@clinicError</span>
+                        }
+                    </div>
+
+                    <div class="form-row">
+                        <label>Admin Full Name *</label>
+                        <input @bind="fullName" 
+                               @bind:event="oninput"
+                               placeholder="Enter full name" 
+                               disabled="@isLoading" />
+                        @if (!string.IsNullOrEmpty(nameError))
+                        {
+                            <span class="error-text">@nameError</span>
+                        }
+                    </div>
+
+                    <div class="form-row">
+                        <label>Email *</label>
+                        <input @bind="email" 
+                               @bind:event="oninput"
+                               type="email" 
+                               placeholder="name@clinic.com" 
+                               disabled="@isLoading" />
+                        @if (!string.IsNullOrEmpty(emailError))
+                        {
+                            <span class="error-text">@emailError</span>
+                        }
+                    </div>
+
+                    <div class="form-row two-col">
+                        <div>
+                            <label>Password *</label>
+                            <input @bind="password" 
+                                   @bind:event="oninput"
+                                   type="password" 
+                                   placeholder="Min 6 characters" 
+                                   disabled="@isLoading" />
+                            @if (!string.IsNullOrEmpty(passwordError))
+                            {
+                                <span class="error-text">@passwordError</span>
+                            }
+                        </div>
+                        <div>
+                            <label>Confirm Password *</label>
+                            <input @bind="confirmPassword" 
+                                   @bind:event="oninput"
+                                   type="password" 
+                                   placeholder="Confirm password" 
+                                   disabled="@isLoading" />
+                            @if (!string.IsNullOrEmpty(confirmError))
+                            {
+                                <span class="error-text">@confirmError</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscription Plan Selection -->
+                <div class="form-section">
+                    <h3 class="section-title">Select Subscription Plan *</h3>
+                    
+                    <div class="plans-grid-inline">
+                        @if (subscriptionPlans != null && subscriptionPlans.Count > 0)
+                        {
+                            @foreach (var plan in subscriptionPlans)
+                            {
+                                <button type="button" 
+                                        class="plan-option @(selectedPlan?.PlanID == plan.PlanID ? "selected" : "")" 
+                                        @onclick='() => SelectPlan(plan)'
+                                        disabled="@isLoading">
+                                    <div class="plan-header">
+                                        <h4>@plan.PlanName</h4>
+                                        <span class="plan-price">₱@plan.Price.ToString("N0")/mo</span>
+                                    </div>
+                                    <ul class="plan-features">
+                                        @if (plan.MaxDoctors.HasValue)
+                                        {
+                                            <li>Up to @plan.MaxDoctors doctor(s) &amp; @plan.MaxReceptionists receptionist(s)</li>
+                                        }
+                                        else
+                                        {
+                                            <li>Unlimited users</li>
+                                        }
+                                        @if (plan.HasAnalytics)
+                                        {
+                                            <li><span class="ui-icon ui-icon-chart" aria-hidden="true"></span> Analytics Dashboard</li>
+                                        }
+                                        @if (plan.HasResourceAccess)
+                                        {
+                                            <li><span class="ui-icon ui-icon-lock" aria-hidden="true"></span> Resource Management</li>
+                                        }
+                                    </ul>
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <p>Loading subscription plans...</p>
+                        }
+                    </div>
+
+                    @if (selectedPlan == null && !string.IsNullOrEmpty(planError))
+                    {
+                        <span class="error-text">@planError</span>
+                    }
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="actions">
+                    <button class="btn btn-primary" 
+                            @onclick="HandleRegister"
+                            disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span class="loader"></span>
+                            <span>Registering...</span>
+                        }
+                        else
+                        {
+                            <span>Register Admin</span>
+                        }
+                    </button>
+                    <button class="btn btn-secondary" 
+                            @onclick="BackToLogin"
+                            disabled="@isLoading">
+                        Back to Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

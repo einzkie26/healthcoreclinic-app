@@ -1,0 +1,784 @@
+@page "/admin/reports"
+@layout AdminLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using Microsoft.EntityFrameworkCore
+@inject AuthService Auth
+@inject ClinicDbContext Db
+
+@code {
+    private string SelectedReportType = "Appointments";
+    private DateTime StartDate = DateTime.Today.AddDays(-30);
+    private DateTime EndDate = DateTime.Today;
+
+    private int AppointmentCount;
+    private int NewPatients;
+    private decimal Revenue;
+    private int OverdueInvoices;
+    private DateTime LastUpdated;
+    private List<MonthlyMetric> MonthlyMetrics = new();
+    private int MaxAppointments;
+    private int MaxPatients;
+    private decimal MaxRevenue;
+    private bool HasAnalyticsAccess = true;
+
+    private IEnumerable<MonthlyMetric> RecentMonths => MonthlyMetrics.TakeLast(6);
+    private string DateRangeText => $"{StartDate:MMM dd, yyyy} to {EndDate:MMM dd, yyyy}";
+    private string LastUpdatedText => LastUpdated == default ? "Not loaded yet" : LastUpdated.ToString("MMM dd, yyyy HH:mm");
+    private string SelectedMetricLabel => SelectedReportType switch
+    {
+        "Patients" => "New Patients",
+        "Revenue" => "Revenue",
+        _ => "Appointments"
+    };
+    private MonthlyMetric? BestMonth => MonthlyMetrics.Count == 0
+        ? null
+        : MonthlyMetrics.OrderByDescending(GetSelectedMetricValue).First();
+    private decimal SelectedTotal => SelectedReportType switch
+    {
+        "Patients" => NewPatients,
+        "Revenue" => Revenue,
+        _ => AppointmentCount
+    };
+    private decimal SelectedAverage => MonthlyMetrics.Count == 0 ? 0 : SelectedTotal / MonthlyMetrics.Count;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var plan = await Auth.GetActiveSubscriptionPlanAsync(Auth.CurrentUserID);
+        if (plan != null)
+            HasAnalyticsAccess = plan.HasAnalytics;
+
+        if (HasAnalyticsAccess)
+            await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        if (EndDate.Date < StartDate.Date)
+            EndDate = StartDate;
+
+        var fromDate = StartDate.Date;
+        var toDateExclusive = EndDate.Date.AddDays(1);
+
+        AppointmentCount = await Db.Appointments
+            .AsNoTracking()
+            .CountAsync(a => a.AppointmentDate >= fromDate && a.AppointmentDate < toDateExclusive);
+
+        NewPatients = await Db.Patients
+            .AsNoTracking()
+            .CountAsync(p => p.CreatedAt >= fromDate && p.CreatedAt < toDateExclusive);
+
+        Revenue = await Db.Payments
+            .AsNoTracking()
+            .Where(p => p.PaymentDate >= fromDate && p.PaymentDate < toDateExclusive)
+            .SumAsync(p => (decimal?)p.AmountPaid) ?? 0m;
+
+        var overdueInvoices = await Db.Invoices
+            .Include(i => i.Payments)
+            .AsNoTracking()
+            .Where(i => i.DueDate.HasValue && i.DueDate.Value.Date < DateTime.Today)
+            .ToListAsync();
+
+        OverdueInvoices = overdueInvoices.Count(i => i.TotalAmount - (i.Payments?.Sum(p => p.AmountPaid) ?? 0m) > 0);
+
+        MonthlyMetrics = await BuildMonthlyMetricsAsync(fromDate, EndDate.Date);
+        MaxAppointments = MonthlyMetrics.Count == 0 ? 0 : MonthlyMetrics.Max(m => m.Appointments);
+        MaxPatients = MonthlyMetrics.Count == 0 ? 0 : MonthlyMetrics.Max(m => m.NewPatients);
+        MaxRevenue = MonthlyMetrics.Count == 0 ? 0 : MonthlyMetrics.Max(m => m.Revenue);
+        LastUpdated = DateTime.Now;
+    }
+
+    private static string GetPercent(decimal value, decimal max)
+    {
+        if (max <= 0) return "0%";
+        var percent = Math.Min(100, Math.Max(0, (value / max) * 100));
+        return $"{percent:0}%";
+    }
+
+    private decimal GetSelectedMetricValue(MonthlyMetric metric)
+    {
+        return SelectedReportType switch
+        {
+            "Patients" => metric.NewPatients,
+            "Revenue" => metric.Revenue,
+            _ => metric.Appointments
+        };
+    }
+
+    private decimal GetSelectedMetricMax()
+    {
+        return SelectedReportType switch
+        {
+            "Patients" => MaxPatients,
+            "Revenue" => MaxRevenue,
+            _ => MaxAppointments
+        };
+    }
+
+    private string FormatMetricValue(decimal value)
+    {
+        return SelectedReportType == "Revenue"
+            ? FormatMoney(value)
+            : value.ToString("N0");
+    }
+
+    private static string FormatMoney(decimal value)
+    {
+        return $"PHP {value:N0}";
+    }
+
+    private async Task<List<MonthlyMetric>> BuildMonthlyMetricsAsync(DateTime fromDate, DateTime toDate)
+    {
+        var startMonth = new DateTime(fromDate.Year, fromDate.Month, 1);
+        var endMonth = new DateTime(toDate.Year, toDate.Month, 1);
+
+        var months = new List<DateTime>();
+        for (var m = startMonth; m <= endMonth; m = m.AddMonths(1))
+        {
+            months.Add(m);
+        }
+
+        var appointments = await Db.Appointments.AsNoTracking().ToListAsync();
+        var patients = await Db.Patients.AsNoTracking().ToListAsync();
+        var payments = await Db.Payments.AsNoTracking().ToListAsync();
+
+        return months.Select(month =>
+        {
+            var monthStart = month;
+            var monthEnd = month.AddMonths(1);
+
+            var monthAppointments = appointments.Count(a => a.AppointmentDate >= monthStart && a.AppointmentDate < monthEnd);
+            var monthPatients = patients.Count(p => p.CreatedAt >= monthStart && p.CreatedAt < monthEnd);
+            var monthRevenue = payments
+                .Where(p => p.PaymentDate >= monthStart && p.PaymentDate < monthEnd)
+                .Sum(p => p.AmountPaid);
+
+            return new MonthlyMetric
+            {
+                Month = monthStart.ToString("MMM yyyy"),
+                Appointments = monthAppointments,
+                NewPatients = monthPatients,
+                Revenue = monthRevenue
+            };
+        }).ToList();
+    }
+
+    private sealed class MonthlyMetric
+    {
+        public string Month { get; set; } = string.Empty;
+        public int Appointments { get; set; }
+        public int NewPatients { get; set; }
+        public decimal Revenue { get; set; }
+    }
+}
+
+<div class="reports-page">
+    <div class="page-header">
+        <div>
+            <h1>Reports & Analytics</h1>
+            <p>Track clinic activity, patient growth, revenue, and billing follow-up.</p>
+        </div>
+        <button class="btn btn-primary" disabled="@(!HasAnalyticsAccess)">
+            <span class="ui-icon ui-icon-download" aria-hidden="true"></span>
+            Export Report
+        </button>
+    </div>
+
+    @if (!HasAnalyticsAccess)
+    {
+        <div class="subscription-block">
+            <strong>Analytics are not included in your current plan.</strong>
+            <p>Upgrade your subscription to unlock reports, trends, and revenue summaries.</p>
+        </div>
+    }
+    else
+    {
+        <div class="filters-panel">
+            <div class="filter-group">
+                <label>Report focus</label>
+                <select class="filter-select" @bind="SelectedReportType">
+                    <option value="Appointments">Appointments</option>
+                    <option value="Patients">New Patients</option>
+                    <option value="Revenue">Revenue</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>From</label>
+                <input type="date" class="filter-input" @bind="StartDate" />
+            </div>
+            <div class="filter-group">
+                <label>To</label>
+                <input type="date" class="filter-input" @bind="EndDate" />
+            </div>
+            <button class="btn btn-secondary" @onclick="LoadReportAsync">Apply Filters</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-top">
+                    <span class="ui-icon ui-icon-calendar" aria-hidden="true"></span>
+                    <p class="summary-label">Appointments</p>
+                </div>
+                <h3 class="summary-value">@AppointmentCount</h3>
+                <p class="summary-meta">Scheduled during this range</p>
+            </div>
+            <div class="summary-card">
+                <div class="summary-top">
+                    <span class="ui-icon ui-icon-users" aria-hidden="true"></span>
+                    <p class="summary-label">New Patients</p>
+                </div>
+                <h3 class="summary-value">@NewPatients</h3>
+                <p class="summary-meta">New patient records created</p>
+            </div>
+            <div class="summary-card">
+                <div class="summary-top">
+                    <span class="ui-icon ui-icon-download" aria-hidden="true"></span>
+                    <p class="summary-label">Revenue</p>
+                </div>
+                <h3 class="summary-value">@FormatMoney(Revenue)</h3>
+                <p class="summary-meta">Payments collected</p>
+            </div>
+            <div class="summary-card">
+                <div class="summary-top">
+                    <span class="ui-icon ui-icon-alert" aria-hidden="true"></span>
+                    <p class="summary-label">Overdue Invoices</p>
+                </div>
+                <h3 class="summary-value">@OverdueInvoices</h3>
+                <p class="summary-meta">Past due and unpaid</p>
+            </div>
+        </div>
+
+        <div class="analytics-layout">
+            <section class="chart-card">
+                <div class="chart-header">
+                    <div>
+                        <h3>@SelectedMetricLabel Trend</h3>
+                        <p class="chart-subtitle">@DateRangeText</p>
+                    </div>
+                    <span class="metric-pill">@FormatMetricValue(SelectedTotal) total</span>
+                </div>
+
+                <div class="chart-grid">
+                    @foreach (var metric in RecentMonths)
+                    {
+                        var value = GetSelectedMetricValue(metric);
+                        <div class="chart-bar">
+                            <span class="bar-number">@FormatMetricValue(value)</span>
+                            <div class="bar-track">
+                                <div class="bar-value" style="height:@GetPercent(value, GetSelectedMetricMax())"></div>
+                            </div>
+                            <span class="bar-label">@metric.Month</span>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <aside class="insights-card">
+                <h3>Snapshot</h3>
+                <div class="insight-row">
+                    <span>Report focus</span>
+                    <strong>@SelectedMetricLabel</strong>
+                </div>
+                <div class="insight-row">
+                    <span>Monthly average</span>
+                    <strong>@FormatMetricValue(SelectedAverage)</strong>
+                </div>
+                <div class="insight-row">
+                    <span>Best month</span>
+                    <strong>@(BestMonth?.Month ?? "No data")</strong>
+                </div>
+                <div class="insight-row">
+                    <span>Updated</span>
+                    <strong>@LastUpdatedText</strong>
+                </div>
+            </aside>
+        </div>
+
+        <section class="report-table-card">
+            <div class="table-header">
+                <div>
+                    <h3>Monthly Breakdown</h3>
+                    <p>Use this table to compare each month across appointments, patient growth, and revenue.</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Appointments</th>
+                            <th>New Patients</th>
+                            <th>Revenue</th>
+                            <th>Highlighted Metric</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (MonthlyMetrics.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="5" class="empty-row">No data available for the selected range.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var metric in MonthlyMetrics)
+                            {
+                                <tr>
+                                    <td>@metric.Month</td>
+                                    <td>@metric.Appointments</td>
+                                    <td>@metric.NewPatients</td>
+                                    <td>@FormatMoney(metric.Revenue)</td>
+                                    <td><strong>@FormatMetricValue(GetSelectedMetricValue(metric))</strong></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</div>
+
+<style>
+.reports-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.page-header p {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.subscription-block {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.subscription-block p {
+    margin: 6px 0 0;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    min-height: 40px;
+    padding: 10px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-primary {
+    background: #4f46e5;
+    color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #4338ca;
+}
+
+.btn-secondary {
+    background: #111827;
+    color: #fff;
+    align-self: end;
+}
+
+.btn-secondary:hover {
+    background: #374151;
+}
+
+.filters-panel {
+    display: grid;
+    grid-template-columns: minmax(180px, 1.2fr) minmax(150px, 1fr) minmax(150px, 1fr) auto;
+    gap: 12px;
+    margin-bottom: 18px;
+    background: #fff;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+}
+
+.filter-group {
+    display: grid;
+    gap: 6px;
+}
+
+.filter-group label {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.filter-select,
+.filter-input {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #111827;
+    background: #fff;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.summary-card,
+.chart-card,
+.insights-card,
+.report-table-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+}
+
+.summary-card {
+    padding: 16px;
+}
+
+.summary-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: #4f46e5;
+}
+
+.summary-label {
+    margin: 0;
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.summary-value {
+    margin: 0 0 6px;
+    font-size: 26px;
+    line-height: 1.15;
+    font-weight: 800;
+    color: #111827;
+}
+
+.summary-meta {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.analytics-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2.3fr) minmax(260px, 0.9fr);
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.chart-card,
+.insights-card,
+.report-table-card {
+    padding: 20px;
+}
+
+.chart-header,
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.chart-header h3,
+.table-header h3,
+.insights-card h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.table-header p,
+.chart-subtitle {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.metric-pill {
+    background: #eef2ff;
+    color: #3730a3;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+    gap: 12px;
+    min-height: 220px;
+    align-items: end;
+}
+
+.chart-bar {
+    min-width: 0;
+    display: grid;
+    grid-template-rows: auto 150px auto;
+    gap: 8px;
+    text-align: center;
+}
+
+.bar-number {
+    min-height: 18px;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.bar-track {
+    height: 150px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    display: flex;
+    align-items: flex-end;
+    padding: 6px;
+}
+
+.bar-value {
+    width: 100%;
+    min-height: 3px;
+    background: #4f46e5;
+    border-radius: 4px;
+}
+
+.bar-label {
+    min-height: 30px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.insights-card {
+    display: grid;
+    align-content: start;
+    gap: 12px;
+}
+
+.insight-row {
+    display: grid;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.insight-row:last-child {
+    border-bottom: none;
+}
+
+.insight-row span {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.insight-row strong {
+    color: #111827;
+    font-size: 15px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.report-table thead {
+    background-color: #f9fafb;
+}
+
+.report-table th {
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 700;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.report-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1f2937;
+}
+
+.report-table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.empty-row {
+    text-align: center;
+    color: #9ca3af;
+    padding: 18px 0;
+}
+
+[data-theme="dark"] .reports-page {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .page-header h1,
+[data-theme="dark"] .summary-value,
+[data-theme="dark"] .chart-header h3,
+[data-theme="dark"] .table-header h3,
+[data-theme="dark"] .insights-card h3,
+[data-theme="dark"] .insight-row strong {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .page-header p,
+[data-theme="dark"] .summary-label,
+[data-theme="dark"] .summary-meta,
+[data-theme="dark"] .table-header p,
+[data-theme="dark"] .chart-subtitle,
+[data-theme="dark"] .bar-label,
+[data-theme="dark"] .insight-row span {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .filters-panel,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .chart-card,
+[data-theme="dark"] .insights-card,
+[data-theme="dark"] .report-table-card {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .filter-select,
+[data-theme="dark"] .filter-input {
+    background: #111827;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .bar-track,
+[data-theme="dark"] .report-table thead {
+    background: #111827;
+}
+
+[data-theme="dark"] .bar-number,
+[data-theme="dark"] .report-table th,
+[data-theme="dark"] .report-table td {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .report-table th,
+[data-theme="dark"] .report-table td,
+[data-theme="dark"] .insight-row {
+    border-color: #374151;
+}
+
+[data-theme="dark"] .report-table tbody tr:hover {
+    background-color: #374151;
+}
+
+[data-theme="dark"] .metric-pill {
+    background: #312e81;
+    color: #e0e7ff;
+}
+
+[data-theme="dark"] .subscription-block {
+    background: #312e81;
+    border-color: #4338ca;
+    color: #e0e7ff;
+}
+
+@@media (max-width: 1024px) {
+    .summary-cards,
+    .analytics-layout {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .chart-card {
+        grid-column: 1 / -1;
+    }
+}
+
+@@media (max-width: 760px) {
+    .reports-page {
+        padding: 16px;
+    }
+
+    .page-header,
+    .chart-header,
+    .table-header {
+        flex-direction: column;
+    }
+
+    .page-header .btn {
+        width: 100%;
+    }
+
+    .filters-panel,
+    .summary-cards,
+    .analytics-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-secondary {
+        width: 100%;
+    }
+}
+</style>

@@ -1,0 +1,612 @@
+@page "/admin/archive"
+@layout AdminLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Models
+@inject AuthService Auth
+
+<div class="archive-container">
+    <div class="page-header">
+        <div>
+            <h1>Archived Patient Records</h1>
+            <p>View and manage archived patient records</p>
+        </div>
+
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(messageText))
+    {
+        <div class="status-message @(isSuccess ? "success" : "error")">
+            <span class="msg-icon">
+                <span class="ui-icon @(isSuccess ? "ui-icon-check" : "ui-icon-alert")" aria-hidden="true"></span>
+            </span>
+            <span>@messageText</span>
+            <button class="msg-close" @onclick="() => messageText = null" aria-label="Dismiss message">
+                <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+            </button>
+        </div>
+    }
+
+    <!-- Search & Filter Bar -->
+    @if (!isLoading && archivedPatients != null && archivedPatients.Count > 0)
+    {
+        <div class="search-filter-bar">
+            <div class="search-box">
+                <span class="search-icon"><span class="ui-icon ui-icon-search" aria-hidden="true"></span></span>
+                <input placeholder="Search by name..." value="@searchTerm" @oninput="OnSearchChanged" />
+                @if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    <button class="clear-search" @onclick="ClearSearch" aria-label="Clear search">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                }
+            </div>
+            <select class="filter-select" @onchange="OnFilterChanged">
+                <option value="">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+            <span class="results-count">@FilteredList.Count result@(FilteredList.Count != 1 ? "s" : "")</span>
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading archived patients...</p>
+        </div>
+    }
+    else if (archivedPatients == null || archivedPatients.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><span class="ui-icon ui-icon-box" aria-hidden="true"></span></div>
+            <h3>No Archived Patients</h3>
+            <p>Archived patient records will appear here</p>
+        </div>
+    }
+    else if (FilteredList.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon"><span class="ui-icon ui-icon-search" aria-hidden="true"></span></div>
+            <h3>No Results Found</h3>
+            <p>Try adjusting your search or filter</p>
+        </div>
+    }
+    else
+    {
+        <div class="patients-grid">
+            <div class="table-responsive">
+                <table class="archive-table">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Birth Date</th>
+                            <th>Gender</th>
+                            <th>Contact</th>
+                            <th>Address</th>
+                            <th>Created</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var patient in PagedList)
+                        {
+                            <tr>
+                                <td class="font-weight-bold">@patient.FullName</td>
+                                <td>@(patient.BirthDate.HasValue ? patient.BirthDate?.ToString("MMM dd, yyyy") : "Not provided")</td>
+                                <td>@(string.IsNullOrEmpty(patient.Gender) ? "-" : patient.Gender)</td>
+                                <td>@(string.IsNullOrEmpty(patient.ContactNumber) ? "-" : patient.ContactNumber)</td>
+                                <td>@(string.IsNullOrEmpty(patient.Address) ? "-" : patient.Address)</td>
+                                <td>@patient.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                <td class="actions-col">
+                                    <button class="action-btn restore" @onclick="() => ConfirmRestore(patient)" title="Restore" aria-label="Restore"><span class="ui-icon ui-icon-restore" aria-hidden="true"></span></button>
+                                    <button class="action-btn delete" @onclick="() => ConfirmDelete(patient)" title="Delete Permanently" aria-label="Delete Permanently"><span class="ui-icon ui-icon-trash" aria-hidden="true"></span></button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (TotalPages > 1)
+            {
+                <div class="pagination">
+                    <button class="page-btn" @onclick="() => GoToPage(currentPage - 1)" disabled="@(currentPage == 1)">Prev</button>
+                    @for (int p = 1; p <= TotalPages; p++)
+                    {
+                        var pg = p;
+                        <button class="page-btn @(pg == currentPage ? "active" : "")" @onclick="() => GoToPage(pg)">@pg</button>
+                    }
+                    <button class="page-btn" @onclick="() => GoToPage(currentPage + 1)" disabled="@(currentPage == TotalPages)">Next</button>
+                    <span class="page-info">Page @currentPage of @TotalPages</span>
+                </div>
+            }
+        </div>
+    }
+
+    @if (showConfirmRestore && patientToRestore != null)
+    {
+        <div class="modal-overlay" @onclick="() => showConfirmRestore = false">
+            <div class="modal-content confirm-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Restore Patient</h2>
+                    <button class="close-btn" @onclick="() => showConfirmRestore = false" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Restore <strong>@patientToRestore.FullName</strong> back to active patients?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => showConfirmRestore = false" disabled="@isSubmitting">Cancel</button>
+                    <button class="btn btn-primary" @onclick="RestorePatient" disabled="@isSubmitting">
+                        @if (isSubmitting) { <span class="loader"></span><span>Restoring...</span> } else { <span>Restore Patient</span> }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showConfirmDelete && patientToDelete != null)
+    {
+        <div class="modal-overlay" @onclick="() => showConfirmDelete = false">
+            <div class="modal-content confirm-modal" @onclick:stopPropagation>
+                <div class="modal-header">
+                    <h2>Delete Permanently</h2>
+                    <button class="close-btn" @onclick="() => showConfirmDelete = false" aria-label="Close">
+                        <span class="ui-icon ui-icon-close" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Permanently delete <strong>@patientToDelete.FullName</strong>? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => showConfirmDelete = false" disabled="@isSubmitting">Cancel</button>
+                    <button class="btn btn-danger" @onclick="DeletePatient" disabled="@isSubmitting">
+                        @if (isSubmitting) { <span class="loader"></span><span>Deleting...</span> } else { <span>Delete Permanently</span> }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Patient>? archivedPatients;
+    private Patient? patientToRestore;
+    private Patient? patientToDelete;
+    private bool showConfirmRestore;
+    private bool showConfirmDelete;
+    private bool isLoading = true;
+    private bool isSubmitting;
+    private string? messageText;
+    private bool isSuccess;
+
+    private string searchTerm = string.Empty;
+    private string genderFilter = string.Empty;
+    private int currentPage = 1;
+    private const int PageSize = 10;
+
+    private List<Patient> FilteredList
+    {
+        get
+        {
+            if (archivedPatients == null) return new();
+            return archivedPatients
+                .Where(p => (string.IsNullOrEmpty(searchTerm) || p.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                         && (string.IsNullOrEmpty(genderFilter) || p.Gender == genderFilter))
+                .ToList();
+        }
+    }
+
+    private int TotalPages => (int)Math.Ceiling(FilteredList.Count / (double)PageSize);
+    private List<Patient> PagedList => FilteredList.Skip((currentPage - 1) * PageSize).Take(PageSize).ToList();
+
+    private void OnSearchChanged(ChangeEventArgs e) { searchTerm = e.Value?.ToString() ?? string.Empty; currentPage = 1; }
+    private void OnFilterChanged(ChangeEventArgs e) { genderFilter = e.Value?.ToString() ?? string.Empty; currentPage = 1; }
+    private void ClearSearch() { searchTerm = string.Empty; currentPage = 1; }
+    private void GoToPage(int page) { if (page >= 1 && page <= TotalPages) currentPage = page; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadArchivedPatients();
+    }
+
+    private async Task LoadArchivedPatients()
+    {
+        isLoading = true;
+        archivedPatients = await Auth.GetArchivedPatientsAsync();
+        isLoading = false;
+        currentPage = 1;
+    }
+
+    private void ConfirmRestore(Patient patient)
+    {
+        patientToRestore = patient;
+        showConfirmRestore = true;
+    }
+
+    private void ConfirmDelete(Patient patient)
+    {
+        patientToDelete = patient;
+        showConfirmDelete = true;
+    }
+
+    private async Task RestorePatient()
+    {
+        if (patientToRestore == null) return;
+        isSubmitting = true;
+        try
+        {
+            var result = await Auth.RestorePatientAsync(patientToRestore.PatientID);
+            messageText = result.Message;
+            isSuccess = result.Success;
+            if (result.Success)
+            {
+                showConfirmRestore = false;
+                patientToRestore = null;
+                await LoadArchivedPatients();
+            }
+        }
+        catch (Exception ex)
+        {
+            messageText = $"Error: {ex.Message}";
+            isSuccess = false;
+        }
+        finally { isSubmitting = false; }
+    }
+
+    private async Task DeletePatient()
+    {
+        if (patientToDelete == null) return;
+        isSubmitting = true;
+        try
+        {
+            var result = await Auth.DeletePatientAsync(patientToDelete.PatientID);
+            messageText = result.Message;
+            isSuccess = result.Success;
+            if (result.Success)
+            {
+                showConfirmDelete = false;
+                patientToDelete = null;
+                await LoadArchivedPatients();
+            }
+        }
+        catch (Exception ex)
+        {
+            messageText = $"Error: {ex.Message}";
+            isSuccess = false;
+        }
+        finally { isSubmitting = false; }
+    }
+}
+
+<style>
+.archive-container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    gap: 16px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.page-header p {
+    margin: 4px 0 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+}
+
+.btn-primary { background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color: #fff; }
+.btn-secondary { background: #e5e7eb; color: #1f2937; border: 1px solid #d1d5db; }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.status-message {
+    padding: 12px 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.status-message.success { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
+.status-message.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.msg-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+    color: inherit;
+    opacity: 0.7;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 24px;
+    text-align: center;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+}
+
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h3 { margin: 0 0 8px 0; color: #1f2937; font-size: 18px; }
+.empty-state p { margin: 0; color: #6b7280; font-size: 14px; }
+
+.patients-grid {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.table-responsive { overflow-x: auto; }
+
+.archive-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.archive-table thead { background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
+.archive-table th { padding: 12px 14px; text-align: left; color: #374151; font-weight: 600; white-space: nowrap; }
+.archive-table td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; color: #1f2937; }
+.archive-table tbody tr:hover { background: #f9fafb; }
+
+.font-weight-bold { font-weight: 600; }
+.actions-col { text-align: center; width: 100px; }
+
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.action-btn:hover { background: #e5e7eb; }
+.action-btn.restore:hover { color: #16a34a; }
+.action-btn.delete:hover { color: #dc2626; }
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 48px rgba(0,0,0,0.15);
+    max-width: 500px;
+    width: 90%;
+    overflow-y: auto;
+}
+
+.modal-content.confirm-modal { max-width: 400px; }
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 { margin: 0; color: #1f2937; font-size: 18px; }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.modal-body { padding: 20px; }
+.modal-body p { margin: 0; color: #1f2937; line-height: 1.6; }
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.loader {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.search-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 8px 32px 8px 32px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+}
+
+.clear-search {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0;
+    line-height: 1;
+}
+
+.clear-search:hover { color: #374151; }
+
+.filter-select {
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #fff;
+    cursor: pointer;
+}
+
+.filter-select:focus { outline: none; border-color: #4f46e5; }
+
+.results-count {
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    min-width: 32px;
+    height: 32px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+    color: #374151;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0 8px;
+}
+
+.page-btn:hover:not(:disabled) { background: #f3f4f6; border-color: #4f46e5; color: #4f46e5; }
+.page-btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.page-info {
+    font-size: 12px;
+    color: #6b7280;
+    margin-left: 8px;
+}
+
+[data-theme="dark"] .archive-container { color: #e5e7eb; }
+[data-theme="dark"] .page-header h1 { color: #f3f4f6; }
+[data-theme="dark"] .patients-grid { background: #1f2937; }
+[data-theme="dark"] .archive-table thead { background: #111827; border-bottom-color: #374151; }
+[data-theme="dark"] .archive-table th { color: #9ca3af; }
+[data-theme="dark"] .archive-table td { color: #e5e7eb; border-bottom-color: #374151; }
+[data-theme="dark"] .archive-table tbody tr:hover { background: #111827; }
+[data-theme="dark"] .modal-content { background: #1f2937; }
+[data-theme="dark"] .modal-header { border-bottom-color: #374151; }
+[data-theme="dark"] .modal-header h2 { color: #f3f4f6; }
+[data-theme="dark"] .modal-body p { color: #e5e7eb; }
+[data-theme="dark"] .modal-footer { border-top-color: #374151; background: #111827; }
+[data-theme="dark"] .empty-state { background: #111827; border-color: #374151; }
+[data-theme="dark"] .empty-state h3 { color: #f3f4f6; }
+[data-theme="dark"] .empty-state p { color: #9ca3af; }
+</style>

@@ -1,0 +1,474 @@
+@page "/admin/subscription"
+@layout AdminLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using SubscriptionModel = healthcoreclinic_app_demo.Models.Subscription
+@using Microsoft.EntityFrameworkCore
+@inject AuthService Auth
+@inject ClinicDbContext Db
+
+@code {
+    private SubscriptionModel? CurrentSubscription;
+    private List<SubscriptionModel> SubscriptionHistory = new();
+    private List<SubscriptionPlan> Plans = new();
+    private SubscriptionPlan? SelectedPlan;
+    private DateTime RequestedStartDate = DateTime.Today;
+    private bool ShowChangeModal;
+    private string? StatusMessage;
+    private bool IsSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        Plans = await Db.SubscriptionPlans
+            .AsNoTracking()
+            .OrderBy(p => p.Price)
+            .ToListAsync();
+
+        SubscriptionHistory = await Db.Subscriptions
+            .AsNoTracking()
+            .Include(s => s.Plan)
+            .Where(s => s.AdminID == Auth.CurrentUserID)
+            .OrderByDescending(s => s.StartDate)
+            .ToListAsync();
+
+        CurrentSubscription = SubscriptionHistory.FirstOrDefault(s => s.Status == "Active")
+            ?? SubscriptionHistory.FirstOrDefault();
+    }
+
+    private void OpenChangePlan(SubscriptionPlan plan)
+    {
+        SelectedPlan = plan;
+        RequestedStartDate = DateTime.Today;
+        ShowChangeModal = true;
+    }
+
+    private void CloseChangeModal() => ShowChangeModal = false;
+
+    private async Task ConfirmChangePlan()
+    {
+        if (SelectedPlan == null)
+            return;
+
+        var startDate = RequestedStartDate.Date;
+        var currentActive = await Db.Subscriptions
+            .FirstOrDefaultAsync(s => s.AdminID == Auth.CurrentUserID && s.Status == "Active");
+
+        if (currentActive != null)
+        {
+            currentActive.Status = "Replaced";
+            currentActive.EndDate = startDate.AddDays(-1);
+        }
+
+        var newSubscription = new SubscriptionModel
+        {
+            AdminID = Auth.CurrentUserID,
+            PlanID = SelectedPlan.PlanID,
+            StartDate = startDate,
+            EndDate = startDate.AddMonths(1),
+            Status = "Active"
+        };
+
+        Db.Subscriptions.Add(newSubscription);
+        await Db.SaveChangesAsync();
+
+        StatusMessage = $"Subscription updated to {SelectedPlan.PlanName}.";
+        IsSuccess = true;
+        ShowChangeModal = false;
+        await LoadDataAsync();
+    }
+}
+
+<div class="page-header-modern">
+    <div>
+        <h1 class="page-title">Clinic Subscription</h1>
+        <p class="page-subtitle">Manage your plan and billing cycle</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(StatusMessage))
+{
+    <div class="status-message @(IsSuccess ? "success" : "error")">
+        <span>@StatusMessage</span>
+        <button class="msg-close" @onclick="() => StatusMessage = null">x</button>
+    </div>
+}
+
+<div class="subscription-grid">
+    <div class="subscription-card current">
+        <h3>Current Plan</h3>
+        @if (CurrentSubscription?.Plan != null)
+        {
+            <p class="plan-name">@CurrentSubscription.Plan.PlanName</p>
+            <p class="plan-price">PHP @CurrentSubscription.Plan.Price / month</p>
+            <p class="plan-status">Status: <span class="status-active">@CurrentSubscription.Status</span></p>
+            <p class="plan-dates">@CurrentSubscription.StartDate.ToString("MMM dd, yyyy") - @(CurrentSubscription.EndDate?.ToString("MMM dd, yyyy") ?? "Open-ended")</p>
+        }
+        else
+        {
+            <p class="help-text">No active subscription found.</p>
+        }
+    </div>
+
+    <div class="subscription-card">
+        <h3>Available Plans</h3>
+        @if (Plans.Count == 0)
+        {
+            <p class="help-text">No plans configured yet.</p>
+        }
+        else
+        {
+            <div class="plan-list">
+                @foreach (var plan in Plans)
+                {
+                    <div class="plan-row">
+                        <div>
+                            <p class="plan-name">@plan.PlanName</p>
+                            <p class="plan-meta">PHP @plan.Price / month</p>
+                            <p class="plan-meta">
+                                Doctors: @(plan.MaxDoctors?.ToString() ?? "Unlimited") | Receptionists: @(plan.MaxReceptionists?.ToString() ?? "Unlimited")
+                            </p>
+                        </div>
+                        <button class="btn btn-primary" @onclick="() => OpenChangePlan(plan)">Select</button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <h3>Subscription History</h3>
+    @if (SubscriptionHistory.Count == 0)
+    {
+        <p class="help-text">No subscription history available.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th>Start</th>
+                        <th>End</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in SubscriptionHistory)
+                    {
+                        <tr>
+                            <td>@sub.Plan?.PlanName</td>
+                            <td><span class="badge">@sub.Status</span></td>
+                            <td>@sub.StartDate.ToString("MMM dd, yyyy")</td>
+                            <td>@(sub.EndDate?.ToString("MMM dd, yyyy") ?? "-")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (ShowChangeModal && SelectedPlan != null)
+{
+    <div class="modal-overlay" @onclick="CloseChangeModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Confirm Plan Change</h2>
+                <button class="modal-close" @onclick="CloseChangeModal">x</button>
+            </div>
+            <div class="modal-body">
+                <p>You are about to switch to <strong>@SelectedPlan.PlanName</strong>.</p>
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" @bind="RequestedStartDate" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseChangeModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="ConfirmChangePlan">Confirm</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.page-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.page-title {
+    margin: 0;
+    color: #1e3c72;
+}
+
+.page-subtitle {
+    margin: 6px 0 0 0;
+    color: #6b7280;
+}
+
+.subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.subscription-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.subscription-card.current {
+    border-left: 4px solid #6366f1;
+}
+
+.plan-name {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #312e81;
+    margin: 8px 0;
+}
+
+.plan-price {
+    color: #4f46e5;
+    font-weight: 600;
+}
+
+.plan-meta {
+    margin: 4px 0;
+    color: #6b7280;
+    font-size: 0.9em;
+}
+
+.plan-status {
+    margin-top: 6px;
+}
+
+.plan-dates {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 0.85em;
+}
+
+.status-active {
+    color: #166534;
+    font-weight: 600;
+}
+
+.plan-list {
+    display: grid;
+    gap: 12px;
+}
+
+.plan-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.history-table th,
+.history-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.badge {
+    background: #eef2ff;
+    color: #3730a3;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8em;
+}
+
+.status-message {
+    padding: 12px 16px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.status-message.success {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.status-message.error {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.msg-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #2563eb;
+}
+
+.btn-secondary {
+    background: #6b7280;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.modal-content {
+    background: white;
+    width: 92%;
+    max-width: 520px;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header,
+.modal-footer {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+    padding: 16px 20px;
+}
+
+.modal-close {
+    border: none;
+    background: transparent;
+    font-size: 1.4em;
+    cursor: pointer;
+}
+
+.form-group {
+    display: grid;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.form-group input {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.help-text {
+    color: #6b7280;
+}
+
+[data-theme="dark"] .page-title {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .page-subtitle,
+[data-theme="dark"] .help-text,
+[data-theme="dark"] .plan-meta,
+[data-theme="dark"] .plan-dates {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .subscription-card,
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal-content {
+    background: #1f2937;
+    border: 1px solid #374151;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .subscription-card.current {
+    border-left-color: #818cf8;
+}
+
+[data-theme="dark"] .subscription-card h3,
+[data-theme="dark"] .card h3,
+[data-theme="dark"] .modal-header h2,
+[data-theme="dark"] .modal-body p,
+[data-theme="dark"] .plan-name {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .plan-price {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .plan-row {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .history-table th,
+[data-theme="dark"] .history-table td,
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: #374151;
+}
+
+[data-theme="dark"] .history-table th,
+[data-theme="dark"] .history-table td {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .badge {
+    background: #312e81;
+    color: #e0e7ff;
+}
+
+[data-theme="dark"] .form-group input {
+    background: #111827;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+</style>

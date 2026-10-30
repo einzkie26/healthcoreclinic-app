@@ -1,0 +1,25 @@
+﻿@page "/admin"
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<h3>Admin Dashboard</h3>
+
+@if (Auth.IsAuthenticated && Auth.CurrentRole == "Admin")
+{
+    <p>Welcome Admin</p>
+}
+else
+{
+    <p>Unauthorized</p>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!Auth.IsAuthenticated || Auth.CurrentRole != "Admin")
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
+}

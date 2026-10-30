@@ -1,0 +1,65 @@
+@inherits LayoutComponentBase
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="layout-container role-receptionist">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <img src="images/hc_logo_transparent.svg" alt="HealthCore logo" class="sidebar-logo" />
+                <p class="sidebar-title">HealthCore</p>
+            </div>
+            <p class="user-role">Receptionist Portal</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="@AppRoutes.Receptionist" class="menu-item @IsActive(AppRoutes.Receptionist)">
+                Dashboard
+            </a>
+            <a href="@AppRoutes.ReceptionistPatients" class="menu-item @IsActive(AppRoutes.ReceptionistPatients)">
+                Patients
+            </a>
+            <a href="@AppRoutes.ReceptionistAppointments" class="menu-item @IsActive(AppRoutes.ReceptionistAppointments)">
+                Appointments
+            </a>
+            <a href="@AppRoutes.ReceptionistBilling" class="menu-item @IsActive(AppRoutes.ReceptionistBilling)">
+                Billing
+            </a>
+            <a href="@AppRoutes.ReceptionistInvoices" class="menu-item @IsActive(AppRoutes.ReceptionistInvoices)">
+                Invoices
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="theme-toggle-btn" onclick="toggleTheme()">Theme Toggle</button>
+            <button class="logout-btn" @onclick="HandleLogout">Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        @Body
+    </main>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!Auth.IsAuthenticated || (Auth.CurrentRole != "Receptionist" && Auth.CurrentRole != "Reception"))
+        {
+            Nav.NavigateTo(AppRoutes.Login);
+        }
+    }
+
+    void HandleLogout()
+    {
+        Auth.Logout();
+        Nav.NavigateTo(AppRoutes.Login);
+    }
+
+    string IsActive(string url)
+    {
+        var uri = new Uri(Nav.Uri);
+        return uri.LocalPath == url ? "active" : "";
+    }
+}

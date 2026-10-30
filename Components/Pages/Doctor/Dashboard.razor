@@ -1,0 +1,547 @@
+@page "/doctor"
+@layout DoctorLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using Microsoft.EntityFrameworkCore
+@inject AuthService Auth
+@inject ClinicDbContext Db
+
+@code {
+    private int ScheduledToday;
+    private int UpcomingAppointments;
+    private int FollowUpsDue;
+    private int AverageVisitMinutes;
+    private int NoShows;
+    private string OnCallStatus = "Off Call";
+    private string NextAppointment = "-";
+    private string ShiftEnds = "-";
+    private string VisitTrendSvgContent = string.Empty;
+    private List<string> VisitTrendLabels = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        var now = DateTime.Now;
+        var today = DateTime.Today;
+        var tomorrow = today.AddDays(1);
+        var next24Hours = now.AddHours(24);
+
+        var doctorAppointments = await Db.Appointments
+            .AsNoTracking()
+            .Where(a => a.DoctorID == Auth.CurrentUserID)
+            .ToListAsync();
+
+        var appointmentsToday = doctorAppointments
+            .Where(a => a.AppointmentDate >= today && a.AppointmentDate < tomorrow)
+            .ToList();
+
+        ScheduledToday = appointmentsToday.Count(IsScheduled);
+        UpcomingAppointments = doctorAppointments.Count(a => a.AppointmentDate >= now && a.AppointmentDate < next24Hours && IsScheduled(a));
+        FollowUpsDue = doctorAppointments.Count(a => a.AppointmentDate.Date <= today && IsFollowUp(a));
+        NoShows = appointmentsToday.Count(IsNoShow);
+
+        var scheduleToday = await Db.DoctorSchedules
+            .AsNoTracking()
+            .Where(s => s.DoctorID == Auth.CurrentUserID && s.AvailableDate >= today && s.AvailableDate < tomorrow)
+            .ToListAsync();
+
+        if (scheduleToday.Count > 0)
+        {
+            var totalMinutes = scheduleToday.Sum(s => (s.EndTime - s.StartTime).TotalMinutes);
+            AverageVisitMinutes = ScheduledToday > 0 ? (int)Math.Round(totalMinutes / ScheduledToday) : 0;
+            ShiftEnds = scheduleToday.Max(s => s.EndTime).ToString(@"hh\:mm");
+            OnCallStatus = "On Call";
+        }
+        else
+        {
+            AverageVisitMinutes = 0;
+            ShiftEnds = "-";
+            OnCallStatus = "Off Call";
+        }
+
+        var nextAppointment = doctorAppointments
+            .Where(a => a.AppointmentDate > now)
+            .OrderBy(a => a.AppointmentDate)
+            .FirstOrDefault();
+
+        NextAppointment = nextAppointment == null ? "-" : nextAppointment.AppointmentDate.ToString("MMM dd, hh:mm tt");
+
+        // Build visit trend from last 7 days
+        var startDate = today.AddDays(-6);
+        var trendPoints = Enumerable.Range(0, 7).Select(i =>
+        {
+            var date = startDate.AddDays(i);
+            var count = doctorAppointments.Count(a => a.AppointmentDate.Date == date);
+            return (Date: date, Count: count);
+        }).ToList();
+
+        VisitTrendLabels = trendPoints.Select(p => p.Date.ToString("ddd")).ToList();
+        BuildVisitTrendSvg(trendPoints.Select(p => p.Count).ToList());
+    }
+
+    private void BuildVisitTrendSvg(List<int> counts)
+    {
+        const double w = 320, h = 160, pad = 16;
+        var max = Math.Max(1, counts.Max());
+        var step = counts.Count > 1 ? (w - 2 * pad) / (counts.Count - 1) : 0;
+
+        var pts = counts.Select((c, i) => (X: pad + step * i, Y: h - pad - (c / (double)max) * (h - 2 * pad))).ToList();
+        var polyline = string.Join(" ", pts.Select(p => $"{p.X:0.#},{p.Y:0.#}"));
+
+        var sb = new System.Text.StringBuilder();
+
+        foreach (var frac in new[] { 0.25, 0.5, 0.75, 1.0 })
+        {
+            var gy = (h - pad - frac * (h - 2 * pad)).ToString("0.#");
+            sb.Append($"<line x1='16' y1='{gy}' x2='304' y2='{gy}' stroke='#d1fae5' stroke-width='1'/>");
+            sb.Append($"<text x='12' y='{gy}' font-size='8' fill='#6ee7b7' text-anchor='end' dominant-baseline='middle'>{(int)(max * frac)}</text>");
+        }
+
+        if (pts.Count > 1)
+        {
+            var areaPath = $"M{pts[0].X:0.#},144 L{string.Join(" L", pts.Select(p => $"{p.X:0.#},{p.Y:0.#}"))} L{pts[^1].X:0.#},144 Z";
+            sb.Append($"<path d='{areaPath}' fill='url(#docGrad)' opacity='0.35'/>");
+        }
+
+        sb.Append($"<polyline points='{polyline}' fill='none' stroke='#11998e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/>");
+
+        foreach (var p in pts.Select((pt, i) => (pt, i)))
+        {
+            sb.Append($"<circle cx='{p.pt.X:0.#}' cy='{p.pt.Y:0.#}' r='4' fill='#11998e' stroke='#fff' stroke-width='1.5'/>");
+            if (counts[p.i] > 0)
+                sb.Append($"<text x='{p.pt.X:0.#}' y='{(p.pt.Y - 8):0.#}' font-size='8' fill='#065f46' text-anchor='middle' font-weight='600'>{counts[p.i]}</text>");
+        }
+
+        VisitTrendSvgContent = sb.ToString();
+    }
+
+    private static bool IsScheduled(Appointment appointment)
+        => appointment.Status.Equals("Scheduled", StringComparison.OrdinalIgnoreCase)
+           || appointment.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsFollowUp(Appointment appointment)
+        => appointment.Status.Contains("Follow", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsNoShow(Appointment appointment)
+        => appointment.Status.Replace("-", " ", StringComparison.OrdinalIgnoreCase)
+            .Equals("No Show", StringComparison.OrdinalIgnoreCase);
+}
+
+<div class="page-container">
+    <div class="page-header-modern">
+        <div class="header-content">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Your daily workload overview</p>
+        </div>
+        <div class="header-date">Last updated: @DateTime.Now.ToString("MMM dd, yyyy HH:mm")</div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #e3f2fd;">
+                <span class="ui-icon ui-icon-chart" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">Scheduled Today</p>
+                <p class="kpi-value">@ScheduledToday</p>
+                <p class="kpi-change neutral">On schedule</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #e8f5e9;">
+                <span class="ui-icon ui-icon-users" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">Upcoming (24h)</p>
+                <p class="kpi-value">@UpcomingAppointments</p>
+                <p class="kpi-change neutral">Next day</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #fff3e0;">
+                <span class="ui-icon ui-icon-box" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">Follow-ups Due</p>
+                <p class="kpi-value">@FollowUpsDue</p>
+                <p class="kpi-change neutral">Due today</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #f3e5f5;">
+                <span class="ui-icon ui-icon-plus" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">Avg Visit Time</p>
+                <p class="kpi-value">@AverageVisitMinutes min</p>
+                <p class="kpi-change neutral">From schedule</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #fee2e2;">
+                <span class="ui-icon ui-icon-alert" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">No-shows</p>
+                <p class="kpi-value">@NoShows</p>
+                <p class="kpi-change neutral">Today</p>
+            </div>
+        </div>
+
+        <div class="kpi-card">
+            <div class="kpi-icon" style="background-color: #e0f2fe;">
+                <span class="ui-icon ui-icon-lock" aria-hidden="true"></span>
+            </div>
+            <div class="kpi-content">
+                <p class="kpi-label">On-call Status</p>
+                <p class="kpi-value">@OnCallStatus</p>
+                <p class="kpi-change neutral">Today</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <h3>Patient Visit Trend</h3>
+                    <p class="chart-subtitle">Last 7 days</p>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <svg viewBox="0 0 320 160" class="trend-chart" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <linearGradient id="docGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#11998e" stop-opacity="0.8" />
+                            <stop offset="100%" stop-color="#11998e" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    @((MarkupString)VisitTrendSvgContent)
+                </svg>
+                <div class="trend-labels">
+                    @foreach (var label in VisitTrendLabels)
+                    {
+                        <span>@label</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-card">
+            <h3>Schedule Status</h3>
+            <div class="stats-list">
+                <div class="stat-row">
+                    <span class="stat-label">Current Status</span>
+                    <span class="badge badge-success">@OnCallStatus</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Next Appointment</span>
+                    <span class="badge badge-info">@NextAppointment</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Shift Ends</span>
+                    <span class="badge badge-info">@ShiftEnds</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">No-shows</span>
+                    <span class="badge badge-warning">@NoShows</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.header-content h1 {
+    margin: 0 0 8px 0;
+}
+
+.page-title {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.95em;
+    color: #7f8c8d;
+    margin: 0;
+}
+
+.header-date {
+    font-size: 0.9em;
+    color: #95a5a6;
+    font-weight: 600;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    border-left: 4px solid #11998e;
+    transition: all 0.3s ease;
+}
+
+.kpi-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+.kpi-icon {
+    font-size: 2.5em;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.kpi-appointments {
+    background-color: #e3f2fd;
+}
+
+.kpi-patients {
+    background-color: #f3e5f5;
+}
+
+.kpi-records {
+    background-color: #e8f5e9;
+}
+
+.kpi-prescriptions {
+    background-color: #fff3e0;
+}
+
+.kpi-content {
+    flex: 1;
+}
+
+.kpi-label {
+    font-size: 0.85em;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+}
+
+.kpi-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+}
+
+.kpi-change {
+    font-size: 0.85em;
+    margin: 0;
+}
+
+.kpi-change.positive {
+    color: #27ae60;
+}
+
+.kpi-change.negative {
+    color: #e74c3c;
+}
+
+.kpi-change.neutral {
+    color: #95a5a6;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.chart-card,
+.stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chart-card h3,
+.stats-card h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.1em;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.chart-subtitle {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.85em;
+}
+
+.chart-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.trend-chart {
+    width: 100%;
+    height: 180px;
+}
+
+.trend-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    font-size: 0.75em;
+    color: #9ca3af;
+    text-align: center;
+}
+
+.stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-warning {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+[data-theme="dark"] .page-title {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .page-subtitle,
+[data-theme="dark"] .header-date,
+[data-theme="dark"] .kpi-label,
+[data-theme="dark"] .kpi-change,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .chart-subtitle,
+[data-theme="dark"] .trend-labels {
+    color: #cbd5f5;
+}
+
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .chart-card,
+[data-theme="dark"] .stats-card {
+    background: #1f2937;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .kpi-value,
+[data-theme="dark"] .chart-card h3,
+[data-theme="dark"] .stats-card h3 {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .kpi-icon {
+    background-color: #111827 !important;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .stat-row {
+    background: #111827;
+}
+
+@@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.8em;
+    }
+
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-header-modern {
+        flex-direction: column;
+    }
+}
+</style>

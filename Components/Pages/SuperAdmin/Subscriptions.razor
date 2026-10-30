@@ -1,0 +1,442 @@
+@page "/superadmin/subscriptions"
+@layout SuperAdminLayout
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using Microsoft.EntityFrameworkCore
+@inject ClinicDbContext Db
+
+@code {
+    private List<Subscription> SubscriptionItems = new();
+    private List<SubscriptionPlan> Plans = new();
+    private List<User> AdminUsers = new();
+    private bool ShowAddSubscriptionModal;
+    private bool ShowViewModal;
+    private Subscription? SelectedSubscription;
+    private int SelectedAdminId;
+    private int SelectedPlanId;
+    private DateTime StartDate = DateTime.Today;
+    private DateTime? EndDate;
+    private string Status = "Active";
+    private string? StatusMessage;
+    private bool IsSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        Plans = await Db.SubscriptionPlans.AsNoTracking().OrderBy(p => p.Price).ToListAsync();
+        AdminUsers = await Db.Users.AsNoTracking()
+            .Include(u => u.Role)
+            .Where(u => u.IsActive && u.Role != null && u.Role.RoleName == "Admin")
+            .OrderBy(u => u.FullName)
+            .ToListAsync();
+
+        SubscriptionItems = await Db.Subscriptions.AsNoTracking()
+            .Include(s => s.Plan)
+            .Include(s => s.Admin)
+            .OrderByDescending(s => s.StartDate)
+            .ToListAsync();
+    }
+
+    private void OpenAddSubscriptionModal()
+    {
+        SelectedAdminId = AdminUsers.FirstOrDefault()?.UserID ?? 0;
+        SelectedPlanId = Plans.FirstOrDefault()?.PlanID ?? 0;
+        StartDate = DateTime.Today;
+        EndDate = DateTime.Today.AddMonths(1);
+        Status = "Active";
+        ShowAddSubscriptionModal = true;
+    }
+
+    private void CloseAddSubscriptionModal() => ShowAddSubscriptionModal = false;
+
+    private async Task SaveSubscriptionAsync()
+    {
+        if (SelectedAdminId == 0 || SelectedPlanId == 0)
+        {
+            StatusMessage = "Admin and plan are required.";
+            IsSuccess = false;
+            return;
+        }
+
+        var subscription = new Subscription
+        {
+            AdminID = SelectedAdminId,
+            PlanID = SelectedPlanId,
+            StartDate = StartDate.Date,
+            EndDate = EndDate?.Date,
+            Status = Status
+        };
+
+        Db.Subscriptions.Add(subscription);
+        await Db.SaveChangesAsync();
+        StatusMessage = "Subscription created.";
+        IsSuccess = true;
+        ShowAddSubscriptionModal = false;
+        await LoadDataAsync();
+    }
+
+    private void OpenView(Subscription subscription)
+    {
+        SelectedSubscription = subscription;
+        ShowViewModal = true;
+    }
+
+    private void CloseView() => ShowViewModal = false;
+
+    private async Task CancelSubscriptionAsync(Subscription subscription)
+    {
+        var sub = await Db.Subscriptions.FirstOrDefaultAsync(s => s.SubscriptionID == subscription.SubscriptionID);
+        if (sub == null)
+            return;
+
+        sub.Status = "Cancelled";
+        sub.EndDate = DateTime.UtcNow.Date;
+        await Db.SaveChangesAsync();
+        await LoadDataAsync();
+    }
+
+    private async Task RenewSubscriptionAsync(Subscription subscription)
+    {
+        var sub = await Db.Subscriptions.FirstOrDefaultAsync(s => s.SubscriptionID == subscription.SubscriptionID);
+        if (sub == null)
+            return;
+
+        sub.Status = "Active";
+        sub.StartDate = DateTime.UtcNow.Date;
+        sub.EndDate = DateTime.UtcNow.AddMonths(1).Date;
+        await Db.SaveChangesAsync();
+        await LoadDataAsync();
+    }
+}
+
+<div class="page-header">
+    <h1>Subscription Management</h1>
+    <button class="btn btn-primary" @onclick="OpenAddSubscriptionModal">+ Add Subscription</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(StatusMessage))
+{
+    <div class="status-message @(IsSuccess ? "success" : "error")">
+        <span>@StatusMessage</span>
+        <button class="msg-close" @onclick="() => StatusMessage = null">×</button>
+    </div>
+}
+
+<div class="card">
+    <table class="subscriptions-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Admin</th>
+                <th>Plan</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Status</th>
+                <th>Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sub in SubscriptionItems)
+            {
+                <tr>
+                    <td>SUB@sub.SubscriptionID.ToString("D3")</td>
+                    <td>@sub.Admin?.FullName</td>
+                    <td>@sub.Plan?.PlanName</td>
+                    <td>@sub.StartDate.ToString("yyyy-MM-dd")</td>
+                    <td>@(sub.EndDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td><span class="badge @(sub.Status == "Active" ? "badge-success" : "badge-danger")">@sub.Status</span></td>
+                    <td>₱@(sub.Plan?.Price.ToString("N0") ?? "0")</td>
+                    <td>
+                        <button class="btn-small btn-view" @onclick="() => OpenView(sub)">View</button>
+                        @if (sub.Status == "Active")
+                        {
+                            <button class="btn-small btn-cancel" @onclick="() => CancelSubscriptionAsync(sub)">Cancel</button>
+                        }
+                        else
+                        {
+                            <button class="btn-small btn-renew" @onclick="() => RenewSubscriptionAsync(sub)">Renew</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (ShowAddSubscriptionModal)
+{
+    <div class="modal-overlay" @onclick="CloseAddSubscriptionModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Add Subscription</h2>
+                <button class="modal-close" @onclick="CloseAddSubscriptionModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Admin</label>
+                    <select @bind="SelectedAdminId">
+                        @foreach (var admin in AdminUsers)
+                        {
+                            <option value="@admin.UserID">@admin.FullName</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Plan</label>
+                    <select @bind="SelectedPlanId">
+                        @foreach (var plan in Plans)
+                        {
+                            <option value="@plan.PlanID">@plan.PlanName (₱@plan.Price)</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select @bind="Status">
+                        <option>Active</option>
+                        <option>Pending</option>
+                        <option>Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Start Date</label>
+                    <input type="date" @bind="StartDate" />
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" @bind="EndDate" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" @onclick="CloseAddSubscriptionModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveSubscriptionAsync">Save Subscription</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowViewModal && SelectedSubscription != null)
+{
+    <div class="modal-overlay" @onclick="CloseView">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Subscription Details</h2>
+                <button class="modal-close" @onclick="CloseView">×</button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Admin:</strong> @SelectedSubscription.Admin?.FullName</p>
+                <p><strong>Plan:</strong> @SelectedSubscription.Plan?.PlanName</p>
+                <p><strong>Status:</strong> @SelectedSubscription.Status</p>
+                <p><strong>Start:</strong> @SelectedSubscription.StartDate.ToString("MMM dd, yyyy")</p>
+                <p><strong>End:</strong> @(SelectedSubscription.EndDate?.ToString("MMM dd, yyyy") ?? "-")</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" @onclick="CloseView">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1e3c72;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #2a5298;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1e3c72;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.subscriptions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.subscriptions-table thead {
+    background-color: #f5f5f5;
+}
+
+.subscriptions-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.subscriptions-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.subscriptions-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.badge-danger {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+.btn-view {
+    background-color: #2196f3;
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #0b7dda;
+}
+
+.btn-cancel {
+    background-color: #f44336;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background-color: #da190b;
+}
+
+.btn-renew {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn-renew:hover {
+    background-color: #45a049;
+}
+
+.status-message {
+    padding: 12px 16px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.status-message.success {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.status-message.error {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.msg-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.modal-content {
+    background: white;
+    width: 92%;
+    max-width: 560px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header,
+.modal-footer {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+    padding: 18px 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.modal-close {
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.form-group {
+    display: grid;
+    gap: 6px;
+}
+
+.form-group input,
+.form-group select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 9px 11px;
+}
+</style>

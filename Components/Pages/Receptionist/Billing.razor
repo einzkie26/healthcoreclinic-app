@@ -1,0 +1,564 @@
+@page "/receptionist/billing"
+@layout ReceptionistLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Models
+@using healthcoreclinic_app_demo.Data
+@using Microsoft.EntityFrameworkCore
+@inject AuthService Auth
+@inject ClinicDbContext Db
+
+@code {
+    private bool ShowPaymentModal;
+    private List<Invoice> Invoices = new();
+    private List<Payment> Payments = new();
+    private PaymentFormModel NewPayment = new();
+    private string StatusFilter = "All";
+    private DateTime? DateFilter;
+    private string? FormError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        Invoices = await Db.Invoices
+            .Include(i => i.Patient)
+            .Include(i => i.Payments)
+            .AsNoTracking()
+            .OrderByDescending(i => i.InvoiceDate)
+            .ToListAsync();
+
+        Payments = await Db.Payments
+            .Include(p => p.Invoice)
+            .ThenInclude(i => i!.Patient)
+            .AsNoTracking()
+            .OrderByDescending(p => p.PaymentDate)
+            .ToListAsync();
+    }
+
+    private IEnumerable<Invoice> FilteredInvoices => Invoices
+        .Where(i => StatusFilter == "All" || GetComputedStatus(i) == StatusFilter)
+        .Where(i => !DateFilter.HasValue || i.InvoiceDate.Date == DateFilter.Value.Date);
+
+    private void OpenPaymentModal()
+    {
+        FormError = null;
+        NewPayment = new PaymentFormModel
+        {
+            PaymentDate = DateTime.Today
+        };
+        ShowPaymentModal = true;
+    }
+
+    private void ClosePaymentModal() => ShowPaymentModal = false;
+
+    private async Task SavePaymentAsync()
+    {
+        if (NewPayment.InvoiceID <= 0)
+        {
+            FormError = "Please select an invoice.";
+            return;
+        }
+
+        if (NewPayment.AmountPaid <= 0)
+        {
+            FormError = "Amount must be greater than zero.";
+            return;
+        }
+
+        var invoice = await Db.Invoices
+            .Include(i => i.Payments)
+            .FirstOrDefaultAsync(i => i.InvoiceID == NewPayment.InvoiceID);
+
+        if (invoice == null)
+        {
+            FormError = "Invoice not found.";
+            return;
+        }
+
+        var currentBalance = invoice.TotalAmount - invoice.Payments.Sum(p => p.AmountPaid);
+        if (NewPayment.AmountPaid > currentBalance)
+        {
+            FormError = "Payment exceeds remaining balance.";
+            return;
+        }
+
+        var payment = new Payment
+        {
+            InvoiceID = invoice.InvoiceID,
+            AmountPaid = NewPayment.AmountPaid,
+            PaymentDate = NewPayment.PaymentDate,
+            Method = NewPayment.Method,
+            ReferenceNumber = NewPayment.ReferenceNumber,
+            Notes = NewPayment.Notes
+        };
+
+        Db.Payments.Add(payment);
+        await Db.SaveChangesAsync();
+        ShowPaymentModal = false;
+        await LoadDataAsync();
+    }
+
+    private decimal GetTotalPaid(Invoice invoice) => invoice.Payments?.Sum(p => p.AmountPaid) ?? 0m;
+    private decimal GetBalance(Invoice invoice) => invoice.TotalAmount - GetTotalPaid(invoice);
+
+    private string GetComputedStatus(Invoice invoice)
+    {
+        var balance = GetBalance(invoice);
+        if (balance <= 0)
+        {
+            return "Paid";
+        }
+
+        if (invoice.DueDate.HasValue && invoice.DueDate.Value.Date < DateTime.Today)
+        {
+            return "Overdue";
+        }
+
+        return "Pending";
+    }
+
+    private string GetStatusBadge(string status) => status switch
+    {
+        "Paid" => "badge-success",
+        "Pending" => "badge-warning",
+        "Overdue" => "badge-danger",
+        _ => "badge-neutral"
+    };
+
+    private decimal TotalCollected => Payments.Sum(p => p.AmountPaid);
+    private decimal TotalOutstanding => Invoices.Sum(i => GetBalance(i));
+
+    private sealed class PaymentFormModel
+    {
+        public int InvoiceID { get; set; }
+        public decimal AmountPaid { get; set; }
+        public DateTime PaymentDate { get; set; } = DateTime.Today;
+        public string Method { get; set; } = "Cash";
+        public string? ReferenceNumber { get; set; }
+        public string? Notes { get; set; }
+    }
+}
+
+<div class="page-header">
+    <h1>Billing & Payments</h1>
+    <button class="btn btn-primary" @onclick="OpenPaymentModal">+ Record Payment</button>
+</div>
+
+<div class="summary-cards">
+    <div class="summary-card">
+        <h4>Total Collected</h4>
+        <p class="summary-value">₱@TotalCollected.ToString("N2")</p>
+    </div>
+    <div class="summary-card">
+        <h4>Outstanding Balance</h4>
+        <p class="summary-value">₱@TotalOutstanding.ToString("N2")</p>
+    </div>
+</div>
+
+<div class="filters">
+    <select class="filter-select" @bind="StatusFilter">
+        <option value="All">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Paid">Paid</option>
+        <option value="Overdue">Overdue</option>
+    </select>
+    <input type="date" class="filter-input" @bind="DateFilter" />
+    <button class="btn btn-secondary" @onclick="LoadDataAsync">Refresh</button>
+</div>
+
+<div class="card">
+    <table class="billing-table">
+        <thead>
+            <tr>
+                <th>Invoice</th>
+                <th>Patient</th>
+                <th>Service</th>
+                <th>Total</th>
+                <th>Balance</th>
+                <th>Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!FilteredInvoices.Any())
+            {
+                <tr>
+                    <td colspan="7" class="empty-row">No billing records found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var invoice in FilteredInvoices)
+                {
+                    var status = GetComputedStatus(invoice);
+                    <tr>
+                        <td>@invoice.InvoiceNumber</td>
+                        <td>@invoice.Patient?.FullName</td>
+                        <td>@invoice.ServiceDescription</td>
+                        <td>₱@invoice.TotalAmount.ToString("N2")</td>
+                        <td>₱@GetBalance(invoice).ToString("N2")</td>
+                        <td>@invoice.InvoiceDate.ToString("yyyy-MM-dd")</td>
+                        <td><span class="badge @GetStatusBadge(status)">@status</span></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3 class="section-title">Payment History</h3>
+    <table class="billing-table">
+        <thead>
+            <tr>
+                <th>Receipt</th>
+                <th>Invoice</th>
+                <th>Patient</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Payments.Count == 0)
+            {
+                <tr>
+                    <td colspan="6" class="empty-row">No payments recorded yet.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var payment in Payments)
+                {
+                    <tr>
+                        <td>PAY-@payment.PaymentID.ToString("0000")</td>
+                        <td>@payment.Invoice?.InvoiceNumber</td>
+                        <td>@payment.Invoice?.Patient?.FullName</td>
+                        <td>₱@payment.AmountPaid.ToString("N2")</td>
+                        <td>@payment.Method</td>
+                        <td>@payment.PaymentDate.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (ShowPaymentModal)
+{
+    <div class="modal-overlay" @onclick="ClosePaymentModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Record Payment</h2>
+                <button class="modal-close" @onclick="ClosePaymentModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Invoice</label>
+                    <select @bind="NewPayment.InvoiceID">
+                        <option value="0">Select invoice</option>
+                        @foreach (var invoice in Invoices)
+                        {
+                            <option value="@invoice.InvoiceID">@invoice.InvoiceNumber - @invoice.Patient?.FullName</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" step="0.01" min="0" @bind="NewPayment.AmountPaid" />
+                </div>
+                <div class="form-group">
+                    <label>Payment Date</label>
+                    <input type="date" @bind-value="NewPayment.PaymentDate" @bind-value:format="yyyy-MM-dd" />
+                </div>
+                <div class="form-group">
+                    <label>Method</label>
+                    <select @bind="NewPayment.Method">
+                        <option>Cash</option>
+                        <option>Card</option>
+                        <option>Bank Transfer</option>
+                        <option>GCash</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Reference # (optional)</label>
+                    <input type="text" @bind="NewPayment.ReferenceNumber" />
+                </div>
+                <div class="form-group">
+                    <label>Notes (optional)</label>
+                    <input type="text" @bind="NewPayment.Notes" />
+                </div>
+                @if (!string.IsNullOrWhiteSpace(FormError))
+                {
+                    <p class="form-error">@FormError</p>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="ClosePaymentModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SavePaymentAsync">Save Payment</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #f5576c;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.summary-card h4 {
+    margin: 0 0 6px 0;
+    color: #6b7280;
+    font-size: 0.9em;
+}
+
+.summary-value {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 700;
+    color: #111827;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #f5576c;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #e0485c;
+}
+
+.btn-secondary {
+    background-color: #666;
+    color: white;
+    padding: 8px 15px;
+    font-size: 0.9em;
+}
+
+.btn-secondary:hover {
+    background-color: #555;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-select,
+.filter-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: #f5576c;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.section-title {
+    margin: 0 0 12px 0;
+    color: #374151;
+}
+
+.billing-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.billing-table thead {
+    background-color: #f5f5f5;
+}
+
+.billing-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.billing-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.billing-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.empty-row {
+    text-align: center;
+    color: #9ca3af;
+    padding: 20px 0;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.badge-info {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.badge-warning {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.badge-danger {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.badge-neutral {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+.btn-view {
+    background-color: #2196f3;
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #0b7dda;
+}
+
+.btn-print {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn-print:hover {
+    background-color: #45a049;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.modal-content {
+    background: white;
+    width: 92%;
+    max-width: 560px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header,
+.modal-footer {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+    padding: 18px 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.modal-close {
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.form-group {
+    display: grid;
+    gap: 6px;
+}
+
+.form-group input,
+.form-group select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 9px 11px;
+}
+
+.form-error {
+    color: #dc2626;
+    font-size: 0.9em;
+    margin: 0;
+}
+</style>

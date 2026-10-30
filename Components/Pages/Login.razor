@@ -1,0 +1,74 @@
+@page "/"
+
+<div class="login-container">
+    <div class="bg-orb bg-orb-one"></div>
+    <div class="bg-orb bg-orb-two"></div>
+    <div class="login-wrapper">
+        <div class="login-card">
+
+            <div class="login-header">
+                <div class="logo-circle">
+                    <img src="images/hc_logo_transparent.svg" alt="HealthCore logo" class="logo-image" />
+                </div>
+                <h1 class="login-title">HealthCore</h1>
+                <p class="login-subtitle">Clinic Management System</p>
+            </div>
+
+            <div class="login-form">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon"></span>
+                        <input @bind="username" 
+                               @onkeyup="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter") await HandleLogin(); })"
+                               class="form-input" 
+                               type="email"
+                               placeholder="Enter your email"
+                               disabled="@isLoading" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon lock"></span>
+                        <input @bind="password" 
+                               @onkeyup="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter") await HandleLogin(); })"
+                               type="password" 
+                               class="form-input" 
+                               placeholder="Enter your password"
+                               disabled="@isLoading" />
+                    </div>
+                </div>
+
+                <button class="login-btn" @onclick="HandleLogin" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="loader"></span>
+                        <span>Signing In...</span>
+                    }
+                    else
+                    {
+                        <span>Sign In</span>
+                    }
+                </button>
+
+                <button class="register-now-btn" @onclick="NavigateToRegister" disabled="@isLoading">Register Now</button>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert alert-@(isSuccess ? "success" : "error")">
+                        <span class="alert-icon">@(isSuccess ? "✓" : "!")</span>
+                        <span class="alert-text">@message</span>
+                        <button class="alert-close" @onclick="ClearMessage">×</button>
+                    </div>
+                }
+            </div>
+
+            <div class="login-footer">
+                <p class="demo-info"> 2026 HealthCore Clinic Management System</p>
+            </div>
+
+        </div>
+    </div>
+</div>

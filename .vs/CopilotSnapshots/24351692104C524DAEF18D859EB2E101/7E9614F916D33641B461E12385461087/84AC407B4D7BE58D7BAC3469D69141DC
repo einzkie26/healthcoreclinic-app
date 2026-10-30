@@ -1,0 +1,97 @@
+﻿@page "/"
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="login-container">
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-circle">
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="2"/>
+                        <path d="M24 12V36M12 24H36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h1 class="login-title">HealthCore</h1>
+                <p class="login-subtitle">Clinic Management System</p>
+            </div>
+
+            <form @onsubmit="HandleLogin" class="login-form">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-wrapper">
+                        <input 
+                            @bind="username" 
+                            id="username"
+                            placeholder="Enter your username" 
+                            class="form-input" 
+                            type="text"
+                            autocomplete="username"
+                            required />
+                        <span class="input-icon">👤</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-wrapper">
+                        <input 
+                            @bind="password" 
+                            id="password"
+                            placeholder="Enter your password" 
+                            type="password" 
+                            class="form-input"
+                            autocomplete="current-password"
+                            required />
+                        <span class="input-icon">🔒</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert alert-error">
+                        <span class="alert-icon">⚠️</span>
+                        <span class="alert-text">@message</span>
+                    </div>
+                }
+
+                <button type="submit" class="login-btn">
+                    <span>Sign In</span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p class="demo-info">Demo credentials available for testing</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    string username;
+    string password;
+    string message;
+
+    void HandleLogin()
+    {
+        var success = Auth.Login(username, password);
+
+        if (!success)
+        {
+            message = "Invalid credentials. Please try again.";
+            return;
+        }
+
+        if (Auth.CurrentRole == "SuperAdmin")
+            Nav.NavigateTo("/superadmin");
+        else if (Auth.CurrentRole == "Admin")
+            Nav.NavigateTo("/admin");
+        else if (Auth.CurrentRole == "Doctor")
+            Nav.NavigateTo("/doctor");
+        else if (Auth.CurrentRole == "Reception")
+            Nav.NavigateTo("/receptionist");
+        else
+            Nav.NavigateTo("/dashboard");
+    }
+}

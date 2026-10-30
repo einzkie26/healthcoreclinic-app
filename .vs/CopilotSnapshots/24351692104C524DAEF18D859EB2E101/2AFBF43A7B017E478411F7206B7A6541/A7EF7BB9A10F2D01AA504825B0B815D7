@@ -1,0 +1,22 @@
+﻿@inherits LayoutComponentBase
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div style="padding:10px; background:#eee;">
+    @if (Auth.IsAuthenticated)
+    {
+        <span>Role: @Auth.CurrentRole</span>
+        <button @onclick="Logout">Logout</button>
+    }
+</div>
+
+@Body
+
+@code {
+    void Logout()
+    {
+        Auth.Logout();
+        Nav.NavigateTo("/");
+    }
+}

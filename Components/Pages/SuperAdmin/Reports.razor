@@ -1,0 +1,353 @@
+@page "/superadmin/reports"
+@layout SuperAdminLayout
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using Microsoft.EntityFrameworkCore
+@inject ClinicDbContext Db
+
+@code {
+    private string ReportType = "Subscriptions";
+    private DateTime StartDate = DateTime.Today.AddDays(-30);
+    private DateTime EndDate = DateTime.Today;
+    private List<ReportRow> Rows = new();
+    private List<TrendPoint> Trend = new();
+    private int TotalUsers;
+    private int NewSubscriptions;
+    private decimal TotalRevenue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReportsAsync();
+    }
+
+    private async Task LoadReportsAsync()
+    {
+        var users = await Db.Users.AsNoTracking().ToListAsync();
+        var subscriptions = await Db.Subscriptions.AsNoTracking()
+            .Include(s => s.Plan)
+            .Where(s => s.StartDate.Date >= StartDate.Date && s.StartDate.Date <= EndDate.Date)
+            .ToListAsync();
+
+        TotalUsers = users.Count;
+        NewSubscriptions = subscriptions.Count;
+        TotalRevenue = subscriptions.Sum(s => s.Plan?.Price ?? 0m);
+
+        Rows = BuildRows(users, subscriptions);
+        Trend = Rows.Select(r => new TrendPoint { Label = r.Date.ToString("MM/dd"), Value = ReportType == "Revenue" ? r.Revenue : r.NewSubscriptions }).ToList();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        await LoadReportsAsync();
+    }
+
+    private List<ReportRow> BuildRows(List<User> users, List<Subscription> subscriptions)
+    {
+        var rows = new List<ReportRow>();
+        var date = StartDate.Date;
+        while (date <= EndDate.Date)
+        {
+            var next = date.AddDays(1);
+            var dailyUsers = users.Count(u => u.CreatedAt.Date == date);
+            var dailySubs = subscriptions.Where(s => s.StartDate.Date == date).ToList();
+            var revenue = dailySubs.Sum(s => s.Plan?.Price ?? 0m);
+            rows.Add(new ReportRow
+            {
+                Date = date,
+                ActiveUsers = dailyUsers,
+                NewSubscriptions = dailySubs.Count,
+                Revenue = revenue
+            });
+            date = next;
+        }
+
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (i == 0)
+                continue;
+            var prev = rows[i - 1].Revenue;
+            rows[i].GrowthPercent = prev == 0 ? 0 : (rows[i].Revenue - prev) / prev * 100;
+        }
+
+        return rows;
+    }
+
+    private string BuildTrendPoints()
+    {
+        if (Trend.Count == 0)
+            return string.Empty;
+
+        const int width = 300;
+        const int height = 140;
+        const int padding = 10;
+        var max = Math.Max(1, Trend.Max(t => t.Value));
+        var step = Trend.Count == 1 ? 0 : (width - padding * 2) / (double)(Trend.Count - 1);
+
+        return string.Join(" ", Trend.Select((point, index) =>
+        {
+            var x = padding + step * index;
+            var y = height - padding - ((double)point.Value / (double)max) * (height - padding * 2);
+            return $"{x:F0},{y:F0}";
+        }));
+    }
+
+    private sealed class ReportRow
+    {
+        public DateTime Date { get; set; }
+        public int ActiveUsers { get; set; }
+        public int NewSubscriptions { get; set; }
+        public decimal Revenue { get; set; }
+        public decimal GrowthPercent { get; set; }
+    }
+
+    private sealed class TrendPoint
+    {
+        public string Label { get; set; } = string.Empty;
+        public decimal Value { get; set; }
+    }
+}
+
+<div class="page-header">
+    <h1>Reports</h1>
+    <button class="btn btn-primary"><span class="ui-icon ui-icon-download" aria-hidden="true"></span> Export</button>
+</div>
+
+<div class="reports-container">
+    <div class="filters">
+        <select class="filter-select" @bind="ReportType">
+            <option>User Activity</option>
+            <option>Revenue</option>
+            <option>Subscriptions</option>
+        </select>
+        <input type="date" class="filter-input" @bind="StartDate" />
+        <input type="date" class="filter-input" @bind="EndDate" />
+        <button class="btn btn-secondary" @onclick="ApplyFiltersAsync">Apply Filters</button>
+    </div>
+
+    <div class="reports-grid">
+        <div class="report-card">
+            <h3>Total Users</h3>
+            <p class="report-value">@TotalUsers</p>
+        </div>
+        <div class="report-card">
+            <h3>New Subscriptions</h3>
+            <p class="report-value">@NewSubscriptions</p>
+        </div>
+        <div class="report-card">
+            <h3>Revenue</h3>
+            <p class="report-value">₱@TotalRevenue.ToString("N0")</p>
+        </div>
+        <div class="report-card">
+            <h3>@ReportType Trend</h3>
+            <div class="chart-placeholder">
+                <svg viewBox="0 0 300 140">
+                    <polyline points="@BuildTrendPoints()" stroke="#2a5298" stroke-width="2" fill="none" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-details">
+        <h2>Detailed Report Data</h2>
+        <div class="card">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Active Users</th>
+                        <th>New Subscriptions</th>
+                        <th>Revenue</th>
+                        <th>Growth %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Rows)
+                    {
+                        <tr>
+                            <td>@row.Date.ToString("yyyy-MM-dd")</td>
+                            <td>@row.ActiveUsers</td>
+                            <td>@row.NewSubscriptions</td>
+                            <td>₱@row.Revenue.ToString("N2")</td>
+                            <td><span class="@(row.GrowthPercent >= 0 ? "positive" : "negative")">@row.GrowthPercent.ToString("N1")%</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1e3c72;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #2a5298;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #1e3c72;
+}
+
+.btn-secondary {
+    background-color: #666;
+    color: white;
+    padding: 8px 15px;
+    font-size: 0.9em;
+}
+
+.btn-secondary:hover {
+    background-color: #555;
+}
+
+.reports-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-select,
+.filter-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: #2a5298;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.report-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.report-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.report-card h3 {
+    margin: 0 0 15px 0;
+    color: #1e3c72;
+}
+
+.report-value {
+    font-size: 1.6em;
+    font-weight: 700;
+    color: #2a5298;
+    margin: 0;
+}
+
+.chart-placeholder {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    padding: 40px;
+    text-align: center;
+    color: #999;
+    margin: 15px 0;
+}
+
+.chart-placeholder p {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+.report-date {
+    font-size: 0.85em;
+    color: #999;
+    margin: 10px 0 0 0;
+}
+
+.report-details {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.report-details h2 {
+    margin: 0 0 20px 0;
+    color: #1e3c72;
+}
+
+.card {
+    background: white;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.report-table thead {
+    background-color: #f5f5f5;
+}
+
+.report-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.report-table td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.report-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.positive {
+    color: #4caf50;
+    font-weight: 600;
+}
+
+.negative {
+    color: #f44336;
+    font-weight: 600;
+}
+</style>

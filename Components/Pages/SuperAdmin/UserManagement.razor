@@ -1,0 +1,535 @@
+@page "/superadmin/users"
+@layout SuperAdminLayout
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using healthcoreclinic_app_demo.Utilities
+@using Microsoft.EntityFrameworkCore
+@inject ClinicDbContext Db
+
+@code {
+    private List<User> Users = new();
+    private List<Role> Roles = new();
+    private string SearchTerm = string.Empty;
+    private bool ShowAddModal;
+    private bool ShowEditModal;
+    private bool ShowDeactivateModal;
+    private string? StatusMessage;
+    private bool IsSuccess;
+    private UserForm NewUser = new();
+    private UserForm EditUser = new();
+    private User? SelectedUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        Roles = await Db.Roles.AsNoTracking().OrderBy(r => r.RoleName).ToListAsync();
+        Users = await Db.Users
+            .AsNoTracking()
+            .Include(u => u.Role)
+            .OrderByDescending(u => u.CreatedAt)
+            .ToListAsync();
+    }
+
+    private IEnumerable<User> FilteredUsers => string.IsNullOrWhiteSpace(SearchTerm)
+        ? Users
+        : Users.Where(u =>
+            u.FullName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+            u.Email.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+            (u.Role?.RoleName?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private static bool CanToggleUser(User user)
+    {
+        var roleName = user.Role?.RoleName?.Trim();
+        return roleName is "Admin" or "Doctor" or "Receptionist";
+    }
+
+    private void OpenAddUser()
+    {
+        NewUser = new UserForm();
+        ShowAddModal = true;
+    }
+
+    private void CloseAddUser() => ShowAddModal = false;
+
+    private void OpenEditUser(User user)
+    {
+        SelectedUser = user;
+        EditUser = new UserForm
+        {
+            FullName = user.FullName,
+            Email = user.Email,
+            RoleID = user.RoleID,
+            IsActive = user.IsActive
+        };
+        ShowEditModal = true;
+    }
+
+    private void CloseEditUser() => ShowEditModal = false;
+
+    private void OpenDeactivate(User user)
+    {
+        if (!CanToggleUser(user))
+        {
+            StatusMessage = "Only Admin, Doctor, and Receptionist users can be activated/deactivated here.";
+            IsSuccess = false;
+            return;
+        }
+
+        SelectedUser = user;
+        ShowDeactivateModal = true;
+    }
+
+    private void CloseDeactivate() => ShowDeactivateModal = false;
+
+    private async Task SaveNewUserAsync()
+    {
+        if (!ValidateUser(NewUser, requirePassword: true))
+            return;
+
+        if (await Db.Users.AnyAsync(u => u.Email == NewUser.Email))
+        {
+            StatusMessage = "Email already exists.";
+            IsSuccess = false;
+            return;
+        }
+
+        var user = new User
+        {
+            FullName = NewUser.FullName.Trim(),
+            Email = NewUser.Email.Trim(),
+            PasswordHash = PasswordHasher.HashPassword(NewUser.Password),
+            RoleID = NewUser.RoleID,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        Db.Users.Add(user);
+        await Db.SaveChangesAsync();
+        StatusMessage = "User created successfully.";
+        IsSuccess = true;
+        ShowAddModal = false;
+        await LoadDataAsync();
+    }
+
+    private async Task SaveEditUserAsync()
+    {
+        if (SelectedUser == null)
+            return;
+
+        if (!ValidateUser(EditUser, requirePassword: false))
+            return;
+
+        var user = await Db.Users.FirstOrDefaultAsync(u => u.UserID == SelectedUser.UserID);
+        if (user == null)
+            return;
+
+        user.FullName = EditUser.FullName.Trim();
+        user.Email = EditUser.Email.Trim();
+        user.RoleID = EditUser.RoleID;
+        user.IsActive = EditUser.IsActive;
+
+        if (!string.IsNullOrWhiteSpace(EditUser.Password))
+        {
+            user.PasswordHash = PasswordHasher.HashPassword(EditUser.Password);
+        }
+
+        await Db.SaveChangesAsync();
+        StatusMessage = "User updated successfully.";
+        IsSuccess = true;
+        ShowEditModal = false;
+        await LoadDataAsync();
+    }
+
+    private async Task ConfirmDeactivateAsync()
+    {
+        if (SelectedUser == null)
+            return;
+
+        var user = await Db.Users.FirstOrDefaultAsync(u => u.UserID == SelectedUser.UserID);
+        if (user == null)
+            return;
+
+        user.IsActive = !user.IsActive;
+        await Db.SaveChangesAsync();
+
+        StatusMessage = user.IsActive ? "User reactivated." : "User deactivated.";
+        IsSuccess = true;
+        ShowDeactivateModal = false;
+        await LoadDataAsync();
+    }
+
+    private bool ValidateUser(UserForm form, bool requirePassword)
+    {
+        if (string.IsNullOrWhiteSpace(form.FullName) || string.IsNullOrWhiteSpace(form.Email) || form.RoleID == 0)
+        {
+            StatusMessage = "Name, email, and role are required.";
+            IsSuccess = false;
+            return false;
+        }
+
+        if (requirePassword && string.IsNullOrWhiteSpace(form.Password))
+        {
+            StatusMessage = "Password is required.";
+            IsSuccess = false;
+            return false;
+        }
+
+        return true;
+    }
+
+    private sealed class UserForm
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public int RoleID { get; set; }
+        public bool IsActive { get; set; } = true;
+    }
+}
+
+<div class="page-header">
+    <div>
+        <h1>User Management</h1>
+        <p class="subtitle">Create, update, and manage access</p>
+    </div>
+    <button class="btn btn-primary" @onclick="OpenAddUser">+ Add New User</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(StatusMessage))
+{
+    <div class="status-message @(IsSuccess ? "success" : "error")">
+        <span>@StatusMessage</span>
+        <button class="msg-close" @onclick="() => StatusMessage = null">×</button>
+    </div>
+}
+
+<div class="filters">
+    <input class="filter-input" placeholder="Search name, email, or role" value="@SearchTerm" @oninput="e => SearchTerm = e.Value?.ToString() ?? string.Empty" />
+</div>
+
+<div class="card">
+    <table class="users-table" data-enhanced="true">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in FilteredUsers)
+            {
+                <tr>
+                    <td>@user.UserID</td>
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td><span class="badge badge-info">@user.Role?.RoleName</span></td>
+                    <td><span class="badge @(user.IsActive ? "badge-success" : "badge-danger")">@(user.IsActive ? "Active" : "Inactive")</span></td>
+                    <td>
+                        <button class="btn-small btn-edit" @onclick="() => OpenEditUser(user)">Edit</button>
+                        @if (CanToggleUser(user))
+                        {
+                            <button class="btn-small btn-delete" @onclick="() => OpenDeactivate(user)">@(user.IsActive ? "Deactivate" : "Activate")</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (ShowAddModal)
+{
+    <div class="modal-overlay" @onclick="CloseAddUser">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Add New User</h2>
+                <button class="modal-close" @onclick="CloseAddUser">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" @bind="NewUser.FullName" />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" @bind="NewUser.Email" />
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select @bind="NewUser.RoleID">
+                        <option value="0">Select role</option>
+                        @foreach (var role in Roles)
+                        {
+                            <option value="@role.RoleID">@role.RoleName</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Temporary Password</label>
+                    <input type="password" @bind="NewUser.Password" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseAddUser">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveNewUserAsync">Create User</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowEditModal)
+{
+    <div class="modal-overlay" @onclick="CloseEditUser">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Edit User</h2>
+                <button class="modal-close" @onclick="CloseEditUser">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" @bind="EditUser.FullName" />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" @bind="EditUser.Email" />
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select @bind="EditUser.RoleID">
+                        <option value="0">Select role</option>
+                        @foreach (var role in Roles)
+                        {
+                            <option value="@role.RoleID">@role.RoleName</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Reset Password (optional)</label>
+                    <input type="password" @bind="EditUser.Password" />
+                </div>
+                <div class="form-group inline">
+                    <label>Active</label>
+                    <input type="checkbox" @bind="EditUser.IsActive" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseEditUser">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveEditUserAsync">Save Changes</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowDeactivateModal && SelectedUser != null)
+{
+    <div class="modal-overlay" @onclick="CloseDeactivate">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>@(SelectedUser.IsActive ? "Deactivate" : "Activate") User</h2>
+                <button class="modal-close" @onclick="CloseDeactivate">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to @(SelectedUser.IsActive ? "deactivate" : "activate") @SelectedUser.FullName?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseDeactivate">Cancel</button>
+                <button class="btn btn-primary" @onclick="ConfirmDeactivateAsync">Confirm</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.subtitle {
+    margin: 6px 0 0 0;
+    color: #6b7280;
+}
+
+.filters {
+    margin-bottom: 12px;
+}
+
+.filter-input {
+    width: 100%;
+    max-width: 320px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8em;
+}
+
+.badge-info {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.badge-success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: white;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #2563eb;
+}
+
+.btn-secondary {
+    background: #6b7280;
+}
+
+.btn-small {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    color: white;
+}
+
+.btn-edit {
+    background: #16a34a;
+}
+
+.btn-delete {
+    background: #dc2626;
+}
+
+.status-message {
+    padding: 12px 16px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.status-message.success {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+.status-message.error {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.msg-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.modal-content {
+    background: white;
+    width: 92%;
+    max-width: 560px;
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header,
+.modal-footer {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+    padding: 16px 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.modal-close {
+    border: none;
+    background: transparent;
+    font-size: 1.4em;
+    cursor: pointer;
+}
+
+.form-group {
+    display: grid;
+    gap: 6px;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.form-group.inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+</style>

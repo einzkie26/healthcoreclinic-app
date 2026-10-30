@@ -1,0 +1,86 @@
+@inherits LayoutComponentBase
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+@code {
+    private bool HasResourceAccess = true;
+    private bool HasAnalyticsAccess = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.IsAuthenticated || Auth.CurrentRole != "Admin")
+        {
+            Nav.NavigateTo(AppRoutes.Login);
+            return;
+        }
+
+        var plan = await Auth.GetActiveSubscriptionPlanAsync(Auth.CurrentUserID);
+        if (plan != null)
+        {
+            HasResourceAccess = plan.HasResourceAccess;
+            HasAnalyticsAccess = plan.HasAnalytics;
+        }
+    }
+
+    void HandleLogout()
+    {
+        Auth.Logout();
+        Nav.NavigateTo(AppRoutes.Login);
+    }
+
+    string IsActive(string url)
+    {
+        var uri = new Uri(Nav.Uri);
+        return uri.LocalPath == url ? "active" : "";
+    }
+}
+
+<div class="layout-container role-admin">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <img src="images/hc_logo_transparent.svg" alt="HealthCore logo" class="sidebar-logo" />
+                <p class="sidebar-title">HealthCore</p>
+            </div>
+            <p class="user-role">Admin Portal</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="@AppRoutes.Admin" class="menu-item @IsActive(AppRoutes.Admin)">
+                Dashboard
+            </a>
+            <a href="@AppRoutes.AdminUsers" class="menu-item @IsActive(AppRoutes.AdminUsers)">
+                Users
+            </a>
+            <a href="@AppRoutes.AdminSubscription" class="menu-item @IsActive(AppRoutes.AdminSubscription)">
+                Subscription
+            </a>
+            @if (HasResourceAccess)
+            {
+                <a href="@AppRoutes.AdminResources" class="menu-item @IsActive(AppRoutes.AdminResources)">
+                    Resources
+                </a>
+            }
+            <a href="@AppRoutes.AdminArchive" class="menu-item @IsActive(AppRoutes.AdminArchive)">
+                Archived Patients
+            </a>
+            @if (HasAnalyticsAccess)
+            {
+                <a href="@AppRoutes.AdminReports" class="menu-item @IsActive(AppRoutes.AdminReports)">
+                    Reports & Analytics
+                </a>
+            }
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="theme-toggle-btn" onclick="toggleTheme()">Theme Toggle</button>
+            <button class="logout-btn" @onclick="HandleLogout">Logout</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        @Body
+    </main>
+</div>
+

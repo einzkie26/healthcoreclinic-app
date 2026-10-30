@@ -1,0 +1,672 @@
+@page "/admin/resources"
+@layout AdminLayout
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Models
+@using healthcoreclinic_app_demo.Data
+@using Microsoft.EntityFrameworkCore
+@inject AuthService Auth
+@inject ClinicDbContext Db
+
+@code {
+    private List<Resource> ResourceItems = new();
+    private ResourceFormModel NewResource = new();
+    private ResourceFormModel EditResource = new();
+    private bool ShowAddResourceModal;
+    private bool ShowEditResourceModal;
+    private bool ShowDeleteResourceModal;
+    private int? DeleteResourceId;
+    private string? FormError;
+    private bool HasResourceAccess = true;
+
+    private readonly string[] ResourceTypes = { "Medical Equipment", "Facilities", "Supplies", "IT & Systems", "Pharmaceuticals" };
+    private readonly string[] ResourceStatuses = { "Available", "Low Stock", "Out of Stock", "In Use" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var plan = await Auth.GetActiveSubscriptionPlanAsync(Auth.CurrentUserID);
+        if (plan != null)
+            HasResourceAccess = plan.HasResourceAccess;
+
+        if (HasResourceAccess)
+            await LoadResourcesAsync();
+    }
+
+    private async Task LoadResourcesAsync()
+    {
+        ResourceItems = await Db.Resources
+            .AsNoTracking()
+            .OrderBy(r => r.ResourceName)
+            .ToListAsync();
+    }
+
+    private void OpenAddResourceModal()
+    {
+        FormError = null;
+        NewResource = new ResourceFormModel();
+        ShowAddResourceModal = true;
+    }
+
+    private void CloseAddResourceModal() => ShowAddResourceModal = false;
+
+    private void OpenEditResourceModal(Resource resource)
+    {
+        FormError = null;
+        EditResource = new ResourceFormModel
+        {
+            ResourceID = resource.ResourceID,
+            ResourceName = resource.ResourceName,
+            ResourceType = resource.ResourceType,
+            Quantity = resource.Quantity,
+            Status = resource.Status
+        };
+        ShowEditResourceModal = true;
+    }
+
+    private void CloseEditResourceModal() => ShowEditResourceModal = false;
+
+    private void OpenDeleteResourceModal(int resourceId)
+    {
+        DeleteResourceId = resourceId;
+        ShowDeleteResourceModal = true;
+    }
+
+    private void CloseDeleteResourceModal()
+    {
+        DeleteResourceId = null;
+        ShowDeleteResourceModal = false;
+    }
+
+    private async Task SaveResourceAsync()
+    {
+        if (!ValidateResource(NewResource))
+        {
+            return;
+        }
+
+        var resource = new Resource
+        {
+            ResourceName = NewResource.ResourceName.Trim(),
+            ResourceType = NewResource.ResourceType,
+            Quantity = NewResource.Quantity,
+            Status = NewResource.Status
+        };
+
+        Db.Resources.Add(resource);
+        await Db.SaveChangesAsync();
+        ShowAddResourceModal = false;
+        await LoadResourcesAsync();
+    }
+
+    private async Task UpdateResourceAsync()
+    {
+        if (!ValidateResource(EditResource))
+        {
+            return;
+        }
+
+        var resource = await Db.Resources.FirstOrDefaultAsync(r => r.ResourceID == EditResource.ResourceID);
+        if (resource == null)
+        {
+            FormError = "Resource not found.";
+            return;
+        }
+
+        resource.ResourceName = EditResource.ResourceName.Trim();
+        resource.ResourceType = EditResource.ResourceType;
+        resource.Quantity = EditResource.Quantity;
+        resource.Status = EditResource.Status;
+
+        await Db.SaveChangesAsync();
+        ShowEditResourceModal = false;
+        await LoadResourcesAsync();
+    }
+
+    private async Task DeleteResourceAsync()
+    {
+        if (!DeleteResourceId.HasValue)
+        {
+            return;
+        }
+
+        var resource = await Db.Resources.FirstOrDefaultAsync(r => r.ResourceID == DeleteResourceId.Value);
+        if (resource != null)
+        {
+            Db.Resources.Remove(resource);
+            await Db.SaveChangesAsync();
+        }
+
+        CloseDeleteResourceModal();
+        await LoadResourcesAsync();
+    }
+
+    private bool ValidateResource(ResourceFormModel resource)
+    {
+        if (string.IsNullOrWhiteSpace(resource.ResourceName))
+        {
+            FormError = "Resource name is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(resource.ResourceType))
+        {
+            FormError = "Resource type is required.";
+            return false;
+        }
+
+        if (resource.Quantity < 0)
+        {
+            FormError = "Quantity cannot be negative.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(resource.Status))
+        {
+            FormError = "Status is required.";
+            return false;
+        }
+
+        FormError = null;
+        return true;
+    }
+
+    private string GetStatusBadge(string status) => status switch
+    {
+        "Available" => "badge-success",
+        "Low Stock" => "badge-warning",
+        "Out of Stock" => "badge-danger",
+        "In Use" => "badge-info",
+        _ => "badge-neutral"
+    };
+
+    private static string FormatResourceId(int id) => $"R{id:0000}";
+
+    private sealed class ResourceFormModel
+    {
+        public int ResourceID { get; set; }
+        public string ResourceName { get; set; } = string.Empty;
+        public string ResourceType { get; set; } = string.Empty;
+        public int Quantity { get; set; } = 0;
+        public string Status { get; set; } = "Available";
+    }
+}
+
+<div class="page-header">
+    <h1>Resources</h1>
+    <button class="btn btn-primary" @onclick="OpenAddResourceModal" disabled="@(!HasResourceAccess)">+ Add Resource</button>
+</div>
+
+@if (!HasResourceAccess)
+{
+    <div class="subscription-block">
+        <p>Resource management is not included in your current plan.</p>
+        <p>Upgrade your subscription to access this feature.</p>
+    </div>
+}
+else
+{
+    <div class="summary-cards">
+        <div class="summary-card">
+            <h4>Total Resources</h4>
+            <p class="summary-value">@ResourceItems.Count</p>
+        </div>
+        <div class="summary-card">
+            <h4>Low Stock</h4>
+            <p class="summary-value">@ResourceItems.Count(r => r.Status == "Low Stock")</p>
+        </div>
+        <div class="summary-card">
+            <h4>Out of Stock</h4>
+            <p class="summary-value">@ResourceItems.Count(r => r.Status == "Out of Stock")</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <table class="resources-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Resource Name</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ResourceItems.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="empty-row">No resources added yet.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var resource in ResourceItems)
+                    {
+                        <tr>
+                            <td>@FormatResourceId(resource.ResourceID)</td>
+                            <td>@resource.ResourceName</td>
+                            <td>@resource.ResourceType</td>
+                            <td>@resource.Quantity</td>
+                            <td><span class="badge @GetStatusBadge(resource.Status)">@resource.Status</span></td>
+                            <td>
+                                <button class="btn-small btn-edit" @onclick="() => OpenEditResourceModal(resource)">Edit</button>
+                                <button class="btn-small btn-delete" @onclick="() => OpenDeleteResourceModal(resource.ResourceID)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (ShowAddResourceModal)
+{
+    <div class="modal-overlay" @onclick="CloseAddResourceModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Add Resource</h2>
+                <button class="modal-close" @onclick="CloseAddResourceModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Resource Name</label>
+                    <input type="text" placeholder="Enter resource name" @bind="NewResource.ResourceName" />
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select @bind="NewResource.ResourceType">
+                        <option value="">Select category</option>
+                        @foreach (var type in ResourceTypes)
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" min="0" @bind="NewResource.Quantity" />
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select @bind="NewResource.Status">
+                        @foreach (var status in ResourceStatuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(FormError))
+                {
+                    <p class="form-error">@FormError</p>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseAddResourceModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="SaveResourceAsync">Save Resource</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowEditResourceModal)
+{
+    <div class="modal-overlay" @onclick="CloseEditResourceModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Edit Resource</h2>
+                <button class="modal-close" @onclick="CloseEditResourceModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Resource Name</label>
+                    <input type="text" placeholder="Enter resource name" @bind="EditResource.ResourceName" />
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select @bind="EditResource.ResourceType">
+                        <option value="">Select category</option>
+                        @foreach (var type in ResourceTypes)
+                        {
+                            <option value="@type">@type</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" min="0" @bind="EditResource.Quantity" />
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select @bind="EditResource.Status">
+                        @foreach (var status in ResourceStatuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(FormError))
+                {
+                    <p class="form-error">@FormError</p>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseEditResourceModal">Cancel</button>
+                <button class="btn btn-primary" @onclick="UpdateResourceAsync">Update Resource</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowDeleteResourceModal)
+{
+    <div class="modal-overlay" @onclick="CloseDeleteResourceModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Delete Resource</h2>
+                <button class="modal-close" @onclick="CloseDeleteResourceModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this resource? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseDeleteResourceModal">Cancel</button>
+                <button class="btn btn-danger" @onclick="DeleteResourceAsync">Delete</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #667eea;
+}
+
+.subscription-block {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.summary-card h4 {
+    margin: 0 0 6px 0;
+    color: #6b7280;
+    font-size: 0.9em;
+}
+
+.summary-value {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #5568d3;
+}
+
+.btn-secondary {
+    background-color: #e5e7eb;
+    color: #111827;
+}
+
+.btn-secondary:hover {
+    background-color: #d1d5db;
+}
+
+.btn-danger {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.resources-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.resources-table thead {
+    background-color: #f5f5f5;
+}
+
+.resources-table th {
+    padding: 14px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+}
+
+.resources-table td {
+    padding: 14px;
+    border-bottom: 1px solid #eee;
+}
+
+.resources-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.empty-row {
+    text-align: center;
+    color: #9ca3af;
+    padding: 24px 0;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.badge-success {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.badge-warning {
+    background-color: #fff3e0;
+    color: #f57c00;
+}
+
+.badge-danger {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.badge-info {
+    background-color: #e0f2fe;
+    color: #0284c7;
+}
+
+.badge-neutral {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+.btn-edit {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #45a049;
+}
+
+.btn-delete {
+    background-color: #f44336;
+    color: white;
+}
+
+.btn-delete:hover {
+    background-color: #da190b;
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+}
+
+.modal-content {
+    background: white;
+    width: 92%;
+    max-width: 560px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header,
+.modal-footer {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-header {
+    border-bottom: 1px solid #eee;
+}
+
+.modal-body {
+    padding: 18px 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.modal-close {
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.form-group {
+    display: grid;
+    gap: 6px;
+}
+
+.form-group input,
+.form-group select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 9px 11px;
+}
+
+.form-error {
+    color: #dc2626;
+    font-size: 0.9em;
+    margin: 0;
+}
+
+[data-theme="dark"] .resources-table thead,
+[data-theme="dark"] .resources-table thead tr,
+[data-theme="dark"] .resources-table thead th {
+    background-color: #1f2937 !important;
+}
+
+[data-theme="dark"] .resources-table th {
+    color: #cbd5e1 !important;
+    border-bottom-color: #475569 !important;
+}
+
+[data-theme="dark"] .resources-table td {
+    color: #e2e8f0 !important;
+    border-bottom-color: #334155 !important;
+}
+
+[data-theme="dark"] .resources-table tbody tr:hover {
+    background-color: #374151 !important;
+}
+
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal-content {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .subscription-block {
+    background: #312e81;
+    border-color: #4338ca;
+    color: #e0e7ff;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select {
+    background: #111827;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .btn-secondary {
+    background-color: #374151;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background-color: #4b5563;
+}
+</style>

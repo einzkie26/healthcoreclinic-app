@@ -1,0 +1,373 @@
+﻿@page "/doctor/patients"
+@layout DoctorLayout
+@using healthcoreclinic_app_demo.Services
+@inject AuthService Auth
+
+<div class="page-container">
+    <div class="page-header-modern">
+        <div class="header-content">
+            <h1 class="page-title">Patients</h1>
+            <p class="page-subtitle">View patient information and medical history</p>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <div class="search-input-group">
+            <input type="text" class="search-input" placeholder="Search by name, ID, or email..." />
+            <span class="search-icon">🔍</span>
+        </div>
+        <select class="status-filter">
+            <option>All</option>
+            <option>Active</option>
+            <option>Inactive</option>
+        </select>
+        <button class="btn btn-secondary">Search</button>
+    </div>
+
+    <div class="table-container">
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Blood Type</th>
+                    <th>Last Visit</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="table-row">
+                    <td><span class="patient-id">PAT001</span></td>
+                    <td><span class="patient-name">John Doe</span></td>
+                    <td><span class="info-text">38</span></td>
+                    <td><span class="blood-type">O+</span></td>
+                    <td><span class="date-info">2024-01-10</span></td>
+                    <td><span class="badge badge-active">Active</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" title="View">View</button>
+                            <button class="btn-action btn-records" title="Records">Records</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="table-row">
+                    <td><span class="patient-id">PAT002</span></td>
+                    <td><span class="patient-name">Jane Smith</span></td>
+                    <td><span class="info-text">34</span></td>
+                    <td><span class="blood-type">A+</span></td>
+                    <td><span class="date-info">2024-01-12</span></td>
+                    <td><span class="badge badge-active">Active</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" title="View">View</button>
+                            <button class="btn-action btn-records" title="Records">Records</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="table-row">
+                    <td><span class="patient-id">PAT003</span></td>
+                    <td><span class="patient-name">Michael Brown</span></td>
+                    <td><span class="info-text">45</span></td>
+                    <td><span class="blood-type">B+</span></td>
+                    <td><span class="date-info">2024-01-15</span></td>
+                    <td><span class="badge badge-active">Active</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" title="View">View</button>
+                            <button class="btn-action btn-records" title="Records">Records</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr class="table-row">
+                    <td><span class="patient-id">PAT004</span></td>
+                    <td><span class="patient-name">Sarah Taylor</span></td>
+                    <td><span class="info-text">29</span></td>
+                    <td><span class="blood-type">AB-</span></td>
+                    <td><span class="date-info">2024-01-08</span></td>
+                    <td><span class="badge badge-inactive">Inactive</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" title="View">View</button>
+                            <button class="btn-action btn-records" title="Records">Records</button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    gap: 20px;
+}
+
+.header-content h1 {
+    margin: 0 0 8px 0;
+}
+
+.page-title {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.page-subtitle {
+    font-size: 0.95em;
+    color: #7f8c8d;
+    margin: 0;
+}
+
+.btn {
+    padding: 11px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary {
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.btn-secondary:hover {
+    background-color: #d5dbdb;
+}
+
+.search-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    background: white;
+    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.search-input-group {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input {
+    width: 100%;
+    padding: 11px 16px 11px 40px;
+    border: 1.5px solid #e0e6ed;
+    border-radius: 8px;
+    font-size: 0.95em;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #11998e;
+    box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    color: #95a5a6;
+}
+
+.status-filter {
+    padding: 11px 16px;
+    border: 1.5px solid #e0e6ed;
+    border-radius: 8px;
+    font-size: 0.95em;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.status-filter:focus {
+    outline: none;
+    border-color: #11998e;
+    box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+}
+
+.table-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+}
+
+.modern-table thead {
+    background: linear-gradient(135deg, #f5f7fa 0%, #f0f2f5 100%);
+    border-bottom: 2px solid #e0e6ed;
+}
+
+.modern-table thead th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 700;
+    color: #2c3e50;
+    text-transform: uppercase;
+    font-size: 0.85em;
+    letter-spacing: 0.5px;
+}
+
+.modern-table tbody tr {
+    border-bottom: 1px solid #f0f2f5;
+    transition: all 0.2s ease;
+}
+
+.modern-table tbody tr:hover {
+    background-color: #f9fafb;
+    box-shadow: inset 0 0 10px rgba(17, 153, 142, 0.05);
+}
+
+.table-row td {
+    padding: 16px;
+    vertical-align: middle;
+}
+
+.patient-id {
+    font-weight: 700;
+    color: #11998e;
+    font-family: 'Courier New', monospace;
+}
+
+.patient-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.info-text {
+    color: #7f8c8d;
+    font-size: 0.92em;
+}
+
+.blood-type {
+    font-weight: 700;
+    color: #e74c3c;
+    background-color: #fadbd8;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.date-info {
+    color: #95a5a6;
+    font-size: 0.92em;
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.badge-inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-action {
+    padding: 7px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 70px;
+}
+
+.btn-view {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.btn-view:hover {
+    background-color: #1976d2;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-records {
+    background-color: #f0f4c3;
+    color: #9ccc65;
+}
+
+.btn-records:hover {
+    background-color: #9ccc65;
+    color: white;
+    transform: translateY(-1px);
+}
+
+@@media (max-width: 768px) {
+    .page-header-modern {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-title {
+        font-size: 1.8em;
+    }
+
+    .search-bar {
+        flex-wrap: wrap;
+    }
+
+    .modern-table {
+        font-size: 0.9em;
+    }
+
+    .modern-table thead th,
+    .table-row td {
+        padding: 12px;
+    }
+
+    .action-buttons {
+        flex-wrap: wrap;
+    }
+}
+</style>

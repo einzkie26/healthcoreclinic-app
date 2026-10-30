@@ -1,0 +1,433 @@
+@page "/doctor/patients"
+@layout DoctorLayout
+@using healthcoreclinic_app_demo
+@using healthcoreclinic_app_demo.Services
+@using healthcoreclinic_app_demo.Data
+@using healthcoreclinic_app_demo.Models
+@using Microsoft.EntityFrameworkCore
+@inject AuthService Auth
+@inject ClinicDbContext Db
+@inject NavigationManager Nav
+
+<div class="patients-container">
+    <div class="page-header">
+        <div>
+            <h1>My Patients</h1>
+            <p>Patients assigned to you via appointments</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading patients...</p>
+        </div>
+    }
+    else if (patientRows == null || patientRows.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="empty-icon">🏥</div>
+            <h3>No Patients Yet</h3>
+            <p>Patients will appear here once appointments are assigned to you</p>
+        </div>
+    }
+    else
+    {
+        <div class="search-section">
+            <input @bind="searchQuery"
+                   @bind:event="oninput"
+                   type="text"
+                   class="search-input"
+                   placeholder="Search by patient name..." />
+        </div>
+
+        <div class="patients-grid">
+            <div class="table-responsive">
+                <table class="patients-table">
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>Birth Date</th>
+                            <th>Gender</th>
+                            <th>Contact</th>
+                            <th>Address</th>
+                            <th>Last Visit</th>
+                            <th class="actions-col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in FilteredRows)
+                        {
+                            <tr class="patient-row" @onclick="() => OpenDetails(row.Patient)" style="cursor: pointer;">
+                                <td class="font-weight-bold">@row.Patient.FullName</td>
+                                <td>@(row.Patient.BirthDate.HasValue ? row.Patient.BirthDate?.ToString("MMM dd, yyyy") : "Not provided")</td>
+                                <td>@(string.IsNullOrEmpty(row.Patient.Gender) ? "-" : row.Patient.Gender)</td>
+                                <td>@(string.IsNullOrEmpty(row.Patient.ContactNumber) ? "-" : row.Patient.ContactNumber)</td>
+                                <td>@(string.IsNullOrEmpty(row.Patient.Address) ? "-" : row.Patient.Address)</td>
+                                <td>@row.LastVisit.ToString("MMM dd, yyyy")</td>
+                                <td class="actions-col" @onclick:stopPropagation>
+                                    <button class="action-btn view" @onclick="() => OpenDetails(row.Patient)" title="View Details">👁</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if (FilteredRows.Count == 0 && !string.IsNullOrWhiteSpace(searchQuery))
+        {
+            <div class="no-results">
+                <p>No patients found matching "<strong>@searchQuery</strong>"</p>
+            </div>
+        }
+    }
+</div>
+
+@if (selectedPatient != null)
+{
+    <div class="modal-overlay" @onclick="CloseDetails">
+        <div class="modal-content details-modal" @onclick:stopPropagation>
+            <div class="modal-header">
+                <h2>Patient Details</h2>
+                <button class="close-btn" @onclick="CloseDetails">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Full Name</label>
+                        <p>@selectedPatient.FullName</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Birth Date</label>
+                        <p>@(selectedPatient.BirthDate.HasValue ? selectedPatient.BirthDate?.ToString("MMMM dd, yyyy") : "Not provided")</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Gender</label>
+                        <p>@(string.IsNullOrEmpty(selectedPatient.Gender) ? "-" : selectedPatient.Gender)</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Contact Number</label>
+                        <p>@(string.IsNullOrEmpty(selectedPatient.ContactNumber) ? "-" : selectedPatient.ContactNumber)</p>
+                    </div>
+                    <div class="detail-item full-width">
+                        <label>Address</label>
+                        <p>@(string.IsNullOrEmpty(selectedPatient.Address) ? "-" : selectedPatient.Address)</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Patient ID</label>
+                        <p class="text-muted">#@selectedPatient.PatientID</p>
+                    </div>
+                    <div class="detail-item">
+                        <label>Status</label>
+                        <p>@(selectedPatient.IsArchived ? "Archived" : "Active")</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseDetails">Close</button>
+                <button class="btn btn-primary" @onclick="() => Nav.NavigateTo(AppRoutes.DoctorMedicalRecords)">View Records</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<DoctorPatientRow> patientRows = new();
+    private Patient? selectedPatient;
+    private string searchQuery = string.Empty;
+    private bool isLoading = true;
+
+    private List<DoctorPatientRow> FilteredRows => string.IsNullOrWhiteSpace(searchQuery)
+        ? patientRows
+        : patientRows.Where(r => r.Patient.FullName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override async Task OnInitializedAsync() => await LoadPatientsAsync();
+
+    private async Task LoadPatientsAsync()
+    {
+        isLoading = true;
+        var appointments = await Db.Appointments
+            .AsNoTracking()
+            .Include(a => a.Patient)
+            .Where(a => a.DoctorID == Auth.CurrentUserID && a.Patient != null)
+            .ToListAsync();
+
+        patientRows = appointments
+            .GroupBy(a => a.PatientID)
+            .Select(g =>
+            {
+                var patient = g.First().Patient!;
+                return new DoctorPatientRow { Patient = patient, LastVisit = g.Max(a => a.AppointmentDate) };
+            })
+            .OrderByDescending(r => r.LastVisit)
+            .ToList();
+
+        isLoading = false;
+    }
+
+    private void OpenDetails(Patient patient) => selectedPatient = patient;
+    private void CloseDetails() => selectedPatient = null;
+
+    private sealed class DoctorPatientRow
+    {
+        public Patient Patient { get; set; } = new();
+        public DateTime LastVisit { get; set; }
+    }
+}
+
+<style>
+.patients-container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    gap: 16px;
+}
+
+.page-header h1 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.page-header p {
+    margin: 4px 0 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+}
+
+.btn-primary { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(17,153,142,0.3); }
+.btn-secondary { background: #e5e7eb; color: #1f2937; border: 1px solid #d1d5db; }
+.btn-secondary:hover { background: #d1d5db; }
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #11998e;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+}
+
+@@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+}
+
+.empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state h3 { margin: 0 0 8px 0; color: #1f2937; font-size: 18px; }
+.empty-state p { margin: 0; color: #6b7280; font-size: 14px; }
+
+.search-section { margin-bottom: 20px; }
+
+.search-input {
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #11998e;
+    box-shadow: 0 0 0 3px rgba(17,153,142,0.1);
+}
+
+.patients-grid {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.table-responsive { overflow-x: auto; }
+
+.patients-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.patients-table thead { background: #f9fafb; border-bottom: 2px solid #e5e7eb; }
+.patients-table th { padding: 12px 14px; text-align: left; color: #374151; font-weight: 600; white-space: nowrap; }
+.patients-table td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; color: #1f2937; }
+.patients-table tbody tr:hover { background: #f9fafb; }
+
+.font-weight-bold { font-weight: 600; }
+.actions-col { text-align: center; width: 100px; white-space: nowrap; }
+
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.action-btn:hover { background: #e5e7eb; }
+.action-btn.view:hover { color: #11998e; }
+
+.no-results { text-align: center; padding: 40px; color: #6b7280; }
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 48px rgba(0,0,0,0.15);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+}
+
+@@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-content.details-modal { max-width: 600px; }
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 { margin: 0; color: #1f2937; font-size: 18px; }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover { background: #f3f4f6; color: #1f2937; }
+
+.modal-body { padding: 20px; }
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.detail-item { display: flex; flex-direction: column; gap: 4px; }
+.detail-item.full-width { grid-column: 1 / -1; }
+
+.detail-item label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-item p { margin: 0; color: #1f2937; font-size: 14px; }
+.text-muted { color: #9ca3af; }
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+@@media (max-width: 768px) {
+    .patients-container { padding: 16px; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .patients-table { font-size: 12px; }
+    .patients-table th, .patients-table td { padding: 10px 8px; }
+    .modal-footer { flex-direction: column; }
+    .modal-footer .btn { width: 100%; }
+}
+
+[data-theme="dark"] .patients-container { color: #e5e7eb; }
+[data-theme="dark"] .page-header h1 { color: #f3f4f6; }
+[data-theme="dark"] .patients-grid { background: #1f2937; }
+[data-theme="dark"] .patients-table thead { background: #111827; border-bottom-color: #374151; }
+[data-theme="dark"] .patients-table th { color: #9ca3af; }
+[data-theme="dark"] .patients-table td { color: #e5e7eb; border-bottom-color: #374151; }
+[data-theme="dark"] .patients-table tbody tr:hover { background: #111827; }
+[data-theme="dark"] .modal-content { background: #1f2937; }
+[data-theme="dark"] .modal-header { border-bottom-color: #374151; }
+[data-theme="dark"] .modal-header h2 { color: #f3f4f6; }
+[data-theme="dark"] .detail-item p { color: #e5e7eb; }
+[data-theme="dark"] .modal-footer { border-top-color: #374151; background: #111827; }
+[data-theme="dark"] .empty-state { background: #111827; border-color: #374151; }
+[data-theme="dark"] .search-input { background: #111827; color: #f3f4f6; border-color: #374151; }
+</style>
